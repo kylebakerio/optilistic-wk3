@@ -7,19 +7,9 @@ describe("ToTheMoon", () => {
 
   beforeEach(async () => {
     ;[owner, treasury, ...addrs] = await ethers.getSigners();
-    // addr2, addr3 are not on whitelist, just general members of public
-    
 
     [addr2, addr3, ...moreAddrs] = addrs.slice(0, addrs.length/2);
     whitelistAddrs = addrs.slice(addrs.length/2, addrs.length);
-
-    // console.log("before....")
-    // ;whitelistAddrs = ethers.getSigner(25);
-    // let list2 = (await ethers.getSigners(25)) // this arg does nothing.
-
-    // console.log('compare', owner.address, list2[0].address)
-
-    // throw new Error()
 
     const ToTheMoon = await ethers.getContractFactory("ToTheMoon");
     tothemoon = await ToTheMoon.deploy(whitelistAddrs.map(a => a.address), treasury.address); // , parseEther("1.5")
@@ -117,12 +107,6 @@ describe("ToTheMoon", () => {
       expect(await tothemoon.fundraiseTotal()).to.be.equal(parseEther("3"));
       // check if deposited
     });
-
-
-
-
-
-
 
 
     describe("Phase 0", () => {
@@ -284,30 +268,6 @@ describe("ToTheMoon", () => {
       });
     })
 
-
   });
 
 });
-
-    // spec:
-    // total goal: 30k ether
-
-    // Phase 0 / seed:
-    // [ ] whitelist ICO only
-    // [ ] max TOTAL contribution of 15k ether
-    // [ ] max INDIVIDUAL contribution is 1.5k
-
-    // Phase 1 / general:
-    // [ ] ICO open to public
-    // [ ] total contrib limit of 30k ether
-    // [ ] individual contrib 1k
-
-    // Phase 2 / open:
-    // [ ] no more individual contrib limit
-    // [ ] tokens released at 1-to-5 eth-to-SPC
-    // [ ] trading allowed
-
-    // [x] owner can pause/resume at any time
-    // [x] owner moves phases forward manually
-
-    // [ ] probably need to override all the ERC20 methods with necessary controls...

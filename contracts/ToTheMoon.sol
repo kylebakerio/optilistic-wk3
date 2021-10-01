@@ -3,9 +3,6 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 import "./SPCToken.sol";
 
 // handles the ICO
@@ -22,17 +19,21 @@ contract ToTheMoon is SPCToken {
     mapping(address => uint) public contributions;
     mapping(address => bool) public whitelist;
 
+    event Buy(address indexed sender, uint eth);
+    event Phase(uint8 phase);
+    event Pause(bool paused);
+
     constructor(address[] memory _whitelist, address _treasury) SPCToken(_treasury) {
-        // add phase 0 whitelist here
         treasury = _treasury;
-        for (uint i = 0; i < _whitelist.length; i++) { // todo: get length correctly
+        for (uint i = 0; i < _whitelist.length; i++) {
             whitelist[_whitelist[i]] = true;
         }
     }
 
     function progressPhase() external onlyOwner {
         require(uint(phase) <= 2, "final_phase");
-        phase = Phases(uint(phase)+1); // https://jeancvllr.medium.com/solidity-tutorial-all-about-enums-684adcc0b38e
+        phase = Phases(uint(phase)+1);
+        emit Phase(uint8(phase));
     }
 
     // https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#ERC20Pausable
@@ -42,15 +43,16 @@ contract ToTheMoon is SPCToken {
         } else {
             _pause();
         }
+        emit Pause(paused());
     }
 
     function ethToToken() private {
-        // payable to treasury
-        // transfer 5:1 token
         (bool sent, bytes memory data) = payable(treasury).call{value: msg.value}("");
         require(sent, "Failed to send Ether");
-        ERC20._transfer(minter, msg.sender, msg.value * 5); // can we call it without tax this way?
+        uint spcTokenAmt = msg.value * 5;
+        ERC20._transfer(minter, msg.sender, spcTokenAmt);
         fundraiseTotal += msg.value;
+        emit Buy(msg.sender, msg.value);
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount)  internal virtual override {
@@ -60,12 +62,9 @@ contract ToTheMoon is SPCToken {
         super._beforeTokenTransfer(from, to, amount);
     }
 
-    // function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-    //     super._beforeTokenTransfer(from, to, amount);
-    // }
-
     function buy() external payable {
-        require(!paused(), "fundraising_paused"); // this is a dupe of logic in ERC30Pausable, but run here allows failing early
+        require(!paused(), "fundraising_paused");
+        // this is a dupe of logic in ERC30Pausable, but run here allows failing early
         if (phase == Phases.Seed) {
             require(whitelist[msg.sender], "whitelist_only");
             require(msg.value <= 1500 ether, "1500eth_limit");
