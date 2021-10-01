@@ -218,7 +218,7 @@ describe("ToTheMoon", () => {
           tothemoon.connect(lastSigner).buy({ value: parseEther("501") })
         ).to.be.revertedWith("30keth_limit");
 
-        await tothemoon.connect(whitelistAddrs[i]).buy({ value: parseEther("500") })
+        await tothemoon.connect(moreAddrs[++i]).buy({ value: parseEther("500") })
 
         expect(await tothemoon.fundraiseTotal()).to.be.equal(parseEther("30000"));
       });

@@ -52,6 +52,7 @@ contract ToTheMoon is SPCToken {
         uint spcTokenAmt = msg.value * 5;
         ERC20._transfer(minter, msg.sender, spcTokenAmt);
         fundraiseTotal += msg.value;
+        contributions[msg.sender] += msg.value;
         emit Buy(msg.sender, msg.value);
     }
 
@@ -67,12 +68,12 @@ contract ToTheMoon is SPCToken {
         // this is a dupe of logic in ERC30Pausable, but run here allows failing early
         if (phase == Phases.Seed) {
             require(whitelist[msg.sender], "whitelist_only");
-            require(msg.value <= 1500 ether, "1500eth_limit");
+            require(msg.value + contributions[msg.sender] <= 1500 ether, "1500eth_limit");
             require(msg.value + fundraiseTotal <= 15000 ether, "15keth_limit");
             ethToToken();
         }
         else if (phase == Phases.General) {
-            require(msg.value <= 1000 ether, "1000eth_limit");
+            require(msg.value + contributions[msg.sender] <= 1000 ether, "1000eth_limit");
             require(msg.value + fundraiseTotal <= 30000 ether, "30keth_limit");
             ethToToken();
         }
