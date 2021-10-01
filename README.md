@@ -1,7 +1,3 @@
-# Improvements:
-
-- emit events on investment, phase change, pause change, tax change
-
 # commands:
 to deploy to rinkeby:
 `npx hardhat run scripts/deploy.js --network rinkeby`
