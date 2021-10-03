@@ -1,3 +1,7 @@
+# deployed
+https://spctoken.surge.sh
+tested with metamask connected to rinkeby.
+
 # commands:
 to deploy to rinkeby:
 `npx hardhat run scripts/deploy.js --network rinkeby`
@@ -5,7 +9,7 @@ to deploy to rinkeby:
 to run local server, go into `frontend` folder and run:
 `npx http-server -S`
 
-to deploy front end, go into frontend folder and run
+to deploy front end, go into `frontend` folder and run
 `surge`
 
 
