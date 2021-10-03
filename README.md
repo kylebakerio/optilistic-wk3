@@ -3,6 +3,11 @@ https://spctoken.surge.sh
 tested with metamask connected to rinkeby.
 
 # commands:
+make sure to `npm install`
+
+to run tests:
+`npx hardhat test`
+
 to deploy to rinkeby:
 `npx hardhat run scripts/deploy.js --network rinkeby`
 
