@@ -42,8 +42,10 @@ contract SPCToken is Ownable, ERC20Pausable {
         uint256 amount
     ) internal virtual override {
         if (taxOn) {
-            ERC20._transfer(sender, treasury, (amount / 100) * taxPercent);
+            ERC20._transfer(sender, treasury, (amount / 100) * 2);
+            ERC20._transfer(sender, recipient, (amount / 100) * (100 - 2) );
+        } else {
+            ERC20._transfer(sender, recipient, amount);
         }
-        ERC20._transfer(sender, recipient, taxOn ? ((amount/100)*(100-taxPercent)) : amount);
     }
 }
