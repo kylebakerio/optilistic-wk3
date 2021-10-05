@@ -236,12 +236,32 @@ describe("ToTheMoon", () => {
 
         expect(await tothemoon.balanceOf(moreAddrs[0].address))
         .to.be.equal(parseEther("5000"));
+
+        // should fail before phase 2
+        await expect(
+          tothemoon.connect(moreAddrs[0]).transfer(moreAddrs[1].address, parseEther("1000"))
+        ).to.be.revertedWith("transfers_forbidden");
+
+        // progress to phase 2
+        await tothemoon.connect(owner).progressPhase();
+        phase = await tothemoon.phase();
+        expect(phase).to.be.equal(2);
+
+        // should pass after phase 2
+        await tothemoon.connect(moreAddrs[0]).transfer(moreAddrs[1].address, parseEther("1000"))
+        
+        expect(await tothemoon.balanceOf(moreAddrs[0].address))
+        .to.be.equal(parseEther("4000"));        
+
+        expect(await tothemoon.balanceOf(moreAddrs[1].address))
+        .to.be.equal(parseEther("1000"));        
       })
 
       it("Releases tokens at 5:1 SPCT:eth ratio", async () => {
         await tothemoon.connect(owner).progressPhase();
+        await tothemoon.connect(owner).progressPhase();
         phase = await tothemoon.phase();
-        expect(phase).to.be.equal(1);
+        expect(phase).to.be.equal(2);
 
         await tothemoon.connect(moreAddrs[0]).buy({ value: parseEther("1000") });
         expect(await tothemoon.fundraiseTotal()).to.be.equal(parseEther("1000"));
@@ -264,7 +284,6 @@ describe("ToTheMoon", () => {
         }
 
         expect(await tothemoon.fundraiseTotal()).to.be.equal(parseEther( (12*4444)+"" ));
-
       });
     })
 
