@@ -235,7 +235,10 @@ describe("ToTheMoon", () => {
         expect(await tothemoon.fundraiseTotal()).to.be.equal(parseEther("1000"));
 
         expect(await tothemoon.balanceOf(moreAddrs[0].address))
-        .to.be.equal(parseEther("5000"));
+        .to.be.equal(parseEther("0")); // 0 because we're not in phase 2 yet
+
+        expect(await tothemoon.contributions(moreAddrs[0].address))
+        .to.be.equal(parseEther("1000"));
 
         // should fail before phase 2
         await expect(
@@ -246,6 +249,10 @@ describe("ToTheMoon", () => {
         await tothemoon.connect(owner).progressPhase();
         phase = await tothemoon.phase();
         expect(phase).to.be.equal(2);
+
+
+        expect(await tothemoon.balanceOf(moreAddrs[0].address))
+        .to.be.equal(parseEther("5000")); // 0 because we're not in phase 2 yet
 
         // should pass after phase 2
         await tothemoon.connect(moreAddrs[0]).transfer(moreAddrs[1].address, parseEther("1000"))

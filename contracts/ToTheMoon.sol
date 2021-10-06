@@ -63,6 +63,14 @@ contract ToTheMoon is SPCToken {
         super._beforeTokenTransfer(from, to, amount);
     }
 
+    function balanceOf(address account) public view virtual override returns (uint256) {
+        if (phase < Phases.Open) {
+            return 0;
+        } else {
+            return ERC20.balanceOf(account);
+        }
+    }
+
     function buy() external payable {
         require(!paused(), "fundraising_paused");
         // this is a dupe of logic in ERC30Pausable, but run here allows failing early

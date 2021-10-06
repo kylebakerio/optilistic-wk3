@@ -9,10 +9,8 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 
 contract SPCToken is Ownable, ERC20Pausable {
     address public treasury;
-    address internal minter; 
-
+    address internal minter;
     bool public taxOn = false;
-    uint public taxPercent = 2;
 
     event Tax(bool taxOn);
 
@@ -21,10 +19,6 @@ contract SPCToken is Ownable, ERC20Pausable {
         treasury = _treasury;
         minter = msg.sender;
         _mint(minter, 500000 ether); // not actually ether, just the same multiple as ether
-    }
-
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        super._beforeTokenTransfer(from, to, amount);
     }
 
     function increaseSupply(uint _amount) external onlyOwner {
