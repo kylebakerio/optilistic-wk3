@@ -47,12 +47,12 @@ contract ToTheMoon is SPCToken {
     }
 
     function ethToToken() private {
-        (bool sent, bytes memory data) = payable(treasury).call{value: msg.value}("");
+        (bool sent, ) = payable(treasury).call{value: msg.value}("");
         require(sent, "Failed to send Ether");
         uint spcTokenAmt = msg.value * 5;
-        ERC20._transfer(minter, msg.sender, spcTokenAmt);
         fundraiseTotal += msg.value;
         contributions[msg.sender] += msg.value;
+        ERC20._transfer(minter, msg.sender, spcTokenAmt);
         emit Buy(msg.sender, msg.value);
     }
 
