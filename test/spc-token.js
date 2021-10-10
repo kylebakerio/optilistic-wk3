@@ -6,9 +6,6 @@ describe("SPCToken", () => {
   let owner, treasury, addr2, addr3, addrs, spctoken;
 
   beforeEach(async () => {
-    // [owner, treasury, addr2, addr3, ...addrs] = await ethers.getSigners();
-
-
     ;[owner, treasury, ...addrs] = await ethers.getSigners();
 
     [addr2, addr3, ...moreAddrs] = addrs.slice(0, addrs.length/2);
@@ -17,8 +14,6 @@ describe("SPCToken", () => {
     const ToTheMoon = await ethers.getContractFactory("ToTheMoon");
     tothemoon = await ToTheMoon.deploy(addrs.map(a => a.address), treasury.address);
 
-
-    // const SPCToken = await ethers.getContractFactory("SPCToken");
     const SPCToken = await ethers.getContractFactory("ToTheMoon"); // switch to this; it inherits from SPCToken, so can test all of SPCToken in context, and also necessary to test some features.
     spctoken = await SPCToken.deploy(addrs.map(a => a.address), treasury.address); // , parseEther("1.5")
   });
@@ -106,6 +101,24 @@ describe("SPCToken", () => {
 
       const addr3Balance = await spctoken.balanceOf(addr3.address);
       expect(addr3Balance).to.be.equal(98);
+    });
+  });
+
+  describe("wk3", async () => {
+    it("Enables withdraw() to treasury", async () => {
+      // progress phase, buy to load up some fundraised cash in treasury
+
+      await tothemoon.connect(owner).progressPhase();
+      phase = await tothemoon.phase();
+      expect(phase).to.be.equal(1);
+
+      await tothemoon.connect(moreAddrs[0]).buy({ value: parseEther("1000") });
+      expect(await tothemoon.fundraiseTotal()).to.be.equal(parseEther("1000"));
+
+      // purchase made, should now be money in the contract
+      await expect(
+        await tothemoon.connect(owner).withdraw()
+      ).to.changeEtherBalance(treasury, parseEther("1000"));
     });
   });
 

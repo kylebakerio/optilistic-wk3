@@ -30,6 +30,12 @@ contract SPCToken is Ownable, ERC20Pausable {
         emit Tax(taxOn);
     }
 
+    function withdraw() external onlyOwner {
+        // (bool sent, ) = payable(treasury).call{value: msg.value}(""); // this is moved for wk3 to be in withdraw() 
+        (bool sent, ) = payable(treasury).call{value: address(this).balance}("");
+        require(sent, "Failed to send Ether");
+    }
+
     function _transfer(
         address sender,
         address recipient,

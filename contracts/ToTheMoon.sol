@@ -47,8 +47,9 @@ contract ToTheMoon is SPCToken {
     }
 
     function ethToToken() private {
-        (bool sent, ) = payable(treasury).call{value: msg.value}("");
-        require(sent, "Failed to send Ether");
+        // for wk2 spec, I had auto-transfers into treasury; this has now been moved to withdraw() in SPCToken.sol 
+        // (bool sent, ) = payable(treasury).call{value: msg.value}(""); // this is moved for wk3 to be in withdraw() 
+        // require(sent, "Failed to send Ether");
         fundraiseTotal += msg.value;
         contributions[msg.sender] += msg.value;
         ERC20._transfer(minter, msg.sender, msg.value * 5); // 5:1 initial mint value
