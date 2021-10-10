@@ -6,13 +6,24 @@ describe("SPCToken", () => {
   let owner, treasury, addr2, addr3, addrs, spctoken;
 
   beforeEach(async () => {
-    [owner, treasury, addr2, addr3, ...addrs] = await ethers.getSigners();
+    // [owner, treasury, addr2, addr3, ...addrs] = await ethers.getSigners();
 
-    const SPCToken = await ethers.getContractFactory("SPCToken");
-    spctoken = await SPCToken.deploy(treasury.address); // , parseEther("1.5")
+
+    ;[owner, treasury, ...addrs] = await ethers.getSigners();
+
+    [addr2, addr3, ...moreAddrs] = addrs.slice(0, addrs.length/2);
+    whitelistAddrs = addrs.slice(addrs.length/2, addrs.length);
+
+    const ToTheMoon = await ethers.getContractFactory("ToTheMoon");
+    tothemoon = await ToTheMoon.deploy(addrs.map(a => a.address), treasury.address);
+
+
+    // const SPCToken = await ethers.getContractFactory("SPCToken");
+    const SPCToken = await ethers.getContractFactory("ToTheMoon"); // switch to this; it inherits from SPCToken, so can test all of SPCToken in context, and also necessary to test some features.
+    spctoken = await SPCToken.deploy(addrs.map(a => a.address), treasury.address); // , parseEther("1.5")
   });
 
-  describe("Spec", () => {
+  describe("wk2", () => {
     it("Sets owner to deployer", async () => {
       const projectOwner = await spctoken.owner();
       expect(projectOwner).to.be.equal(owner.address);
@@ -84,10 +95,18 @@ describe("SPCToken", () => {
     it("Takes 2% tax for transfers when tax is on", async () => {
       await spctoken.setTaxStatus(true);
       await spctoken.connect(owner).transfer(addr3.address, 100);
+
+      await spctoken.connect(owner).progressPhase();
+      phase = await spctoken.phase();
+      expect(phase).to.be.equal(1);
+
+      await spctoken.connect(owner).progressPhase();
+      phase = await spctoken.phase();
+      expect(phase).to.be.equal(2);
+
       const addr3Balance = await spctoken.balanceOf(addr3.address);
       expect(addr3Balance).to.be.equal(98);
     });
-
   });
 
 });
