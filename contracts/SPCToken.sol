@@ -21,7 +21,7 @@ contract SPCToken is Ownable, ERC20Pausable {
         _mint(minter, 500000 ether); // not actually ether, just the same multiple as ether
     }
 
-    function increaseSupply(uint _amount) external onlyOwner {
+    function mint(uint _amount) external onlyOwner {
         _mint(msg.sender, _amount);
     }
 

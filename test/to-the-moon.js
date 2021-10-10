@@ -250,7 +250,6 @@ describe("ToTheMoon", () => {
         phase = await tothemoon.phase();
         expect(phase).to.be.equal(2);
 
-
         expect(await tothemoon.balanceOf(moreAddrs[0].address))
         .to.be.equal(parseEther("5000")); // 0 because we're not in phase 2 yet
 
@@ -261,7 +260,7 @@ describe("ToTheMoon", () => {
         .to.be.equal(parseEther("4000"));        
 
         expect(await tothemoon.balanceOf(moreAddrs[1].address))
-        .to.be.equal(parseEther("1000"));        
+        .to.be.equal(parseEther("1000"));
       })
 
       it("Releases tokens at 5:1 SPCT:eth ratio", async () => {

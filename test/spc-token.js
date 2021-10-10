@@ -51,12 +51,12 @@ describe("SPCToken", () => {
       tokens = await spctoken.totalSupply();
       expect(tokens).to.be.equal( parseEther("500000") );
 
-      await spctoken.connect(owner).increaseSupply( parseEther("2000") )
+      await spctoken.connect(owner).mint( parseEther("2000") )
       tokens = await spctoken.totalSupply();
       expect(tokens).to.be.equal( parseEther("502000") );
 
       await expect(
-        spctoken.connect(addr2).increaseSupply( parseEther("3000") )
+        spctoken.connect(addr2).mint( parseEther("3000") )
       ).to.be.revertedWith(
         'Ownable: caller is not the owner'
       );
@@ -68,6 +68,15 @@ describe("SPCToken", () => {
     it("Takes no tax for transfers when tax is off", async () => {
       await spctoken.setTaxStatus(false);
       await spctoken.connect(owner).transfer(addr3.address, 100);
+
+      await spctoken.connect(owner).progressPhase();
+      phase = await spctoken.phase();
+      expect(phase).to.be.equal(1);
+
+      await spctoken.connect(owner).progressPhase();
+      phase = await spctoken.phase();
+      expect(phase).to.be.equal(2);
+
       const addr3Balance = await spctoken.balanceOf(addr3.address);
       expect(addr3Balance).to.be.equal(100);
     });

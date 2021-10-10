@@ -47,12 +47,12 @@ contract ToTheMoon is SPCToken {
     }
 
     function ethToToken() private {
-        (bool sent, ) = payable(treasury).call{value: msg.value}("");
-        require(sent, "Failed to send Ether");
-        uint spcTokenAmt = msg.value * 5;
+        // for wk2 spec, I had auto-transfers into treasury; this has now been moved to withdraw() in SPCToken.sol 
+        // (bool sent, ) = payable(treasury).call{value: msg.value}(""); // this is moved for wk3 to be in withdraw() 
+        // require(sent, "Failed to send Ether");
         fundraiseTotal += msg.value;
         contributions[msg.sender] += msg.value;
-        ERC20._transfer(minter, msg.sender, spcTokenAmt);
+        ERC20._transfer(minter, msg.sender, msg.value * 5); // 5:1 initial mint value
         emit Buy(msg.sender, msg.value);
     }
 
@@ -73,20 +73,15 @@ contract ToTheMoon is SPCToken {
 
     function buy() external payable {
         require(!paused(), "fundraising_paused");
-        // this is a dupe of logic in ERC30Pausable, but run here allows failing early
         if (phase == Phases.Seed) {
             require(whitelist[msg.sender], "whitelist_only");
             require(msg.value + contributions[msg.sender] <= 1500 ether, "1500eth_limit");
             require(msg.value + fundraiseTotal <= 15000 ether, "15keth_limit");
-            ethToToken();
         }
         else if (phase == Phases.General) {
             require(msg.value + contributions[msg.sender] <= 1000 ether, "1000eth_limit");
             require(msg.value + fundraiseTotal <= 30000 ether, "30keth_limit");
-            ethToToken();
         }
-        else if (phase == Phases.Open) {
-            ethToToken();
-        }
+        ethToToken();
     }
 }
