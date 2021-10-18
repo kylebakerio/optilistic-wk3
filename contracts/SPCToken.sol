@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
@@ -34,7 +34,7 @@ contract SPCToken is Ownable, ERC20Pausable {
         require(msg.sender == routerAddress || msg.sender == spclAddress, "internal_only");
         // console.log("INCREASE ALLOWANCE",tx.origin, msg.sender, spender, addedValue);
         _approve(tx.origin, spender, allowance(tx.origin, spender) + addedValue);
-        console.log('new allowance', allowance(tx.origin, spender));
+        // console.log('new allowance', allowance(tx.origin, spender));
         return true;
     }
 
@@ -43,7 +43,7 @@ contract SPCToken is Ownable, ERC20Pausable {
         address recipient,
         uint256 amount
     ) internal virtual override {
-        console.log("spct transfer", sender, recipient, amount / 1 ether);
+        // console.log("spct transfer", sender, recipient, amount / 1 ether);
         if (taxOn) {
             ERC20._transfer(sender, treasury, (amount / 100) * 2);
             ERC20._transfer(sender, recipient, (amount / 100) * (100 - 2) );

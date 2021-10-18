@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 import "./SPCToken.sol";
 
@@ -76,13 +76,13 @@ contract ToTheMoon is SPCToken {
         uint ethBalance = address(this).balance;
 
         if (router.haveLiquidity()) {
-            console.log("before call");
+            // console.log("before call");
             uint spctPrice = router.getSPCTtoETH10000000() / 10000000;
-            console.log("has liquidity, adding more liquidity, price is", spctPrice);
+            // console.log("has liquidity, adding more liquidity, price is", spctPrice);
             router.addLiquidity{value: address(this).balance}(spctPrice * address(this).balance, 0, treasury);
         }
         else {
-            console.log("no liquidity, initial liquidity add event");
+            // console.log("no liquidity, initial liquidity add event");
             router.addLiquidity{value: address(this).balance}(5 * address(this).balance, 0, treasury);
         }
     }

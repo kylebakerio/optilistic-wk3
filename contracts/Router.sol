@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -30,7 +30,7 @@ contract Router is Ownable {
 	}
 
 	function haveLiquidity() public view returns(bool) {
-		console.log('router: current liquidity of <eth> <spct>', SPCLaddress.balance / 1 ether, spctContract.balanceOf(SPCLaddress) / 1 ether);
+		// console.log('router: current liquidity of <eth> <spct>', SPCLaddress.balance / 1 ether, spctContract.balanceOf(SPCLaddress) / 1 ether);
 		return SPCLaddress.balance > 0 && spctContract.balanceOf(SPCLaddress) > 0;
 	}
 
@@ -38,7 +38,7 @@ contract Router is Ownable {
 	function getSPCTtoETH10000000() public payable returns(uint scaledPrice) {
 		require(haveLiquidity(), "no_liquidity");
 		scaledPrice = (spctContract.balanceOf(SPCLaddress) * 10000000) / (SPCLaddress.balance - msg.value);
-		console.log("<scaled price> <spctbalance> <ethbalance>", scaledPrice, spctContract.balanceOf(SPCLaddress)/1 ether, (SPCLaddress.balance - msg.value)/1 ether);
+		// console.log("<scaled price> <spctbalance> <ethbalance>", scaledPrice, spctContract.balanceOf(SPCLaddress)/1 ether, (SPCLaddress.balance - msg.value)/1 ether);
 		return scaledPrice;
 	}
 
@@ -46,20 +46,18 @@ contract Router is Ownable {
 	function getETHtoSPCT10000000() public payable returns(uint scaledPrice) {
 		require(haveLiquidity(), "no_liquidity");
 		scaledPrice = ((SPCLaddress.balance - msg.value)  * 10000000) / (spctContract.balanceOf(SPCLaddress));
-		console.log("<scaled price> <spctbalance> <ethbalance>", scaledPrice, spctContract.balanceOf(SPCLaddress)/1 ether, (SPCLaddress.balance - msg.value)/1 ether);
+		// console.log("<scaled price> <spctbalance> <ethbalance>", scaledPrice, spctContract.balanceOf(SPCLaddress)/1 ether, (SPCLaddress.balance - msg.value)/1 ether);
 		return scaledPrice;
 	}
 
 	function addLiquidity(uint amountSPCT, uint maxSlippage, address spclReceiver) external payable {
-		// TODO:
-		// add support for slippage
 		// "These are the minimum acceptable amounts to deposit. If the transaction cannot take place with these amounts or more, revert out of it. If you don't want this feature, just specify zero."
 		require(marketOpen || msg.sender == SPCTaddress, "market_closed");
 		if (!marketOpen) {
 			marketOpen = true;
 		}
 
-		console.log('router:addLiquidity',msg.value / 1 ether, amountSPCT / 1 ether);
+		// console.log('router:addLiquidity',msg.value / 1 ether, amountSPCT / 1 ether);
 
 		bool increasedAllowance = spctContract.increaseAllowanceTX(SPCLaddress, amountSPCT);
 		require(increasedAllowance, "allowance_fail"); // (spender, amount)
@@ -79,34 +77,34 @@ contract Router is Ownable {
 	// if _spctToSwap is > 0, swaps spct -> eth; 
 	// if _spctToSwap = 0, swaps eth -> spct
 	function swap(uint _maxSlip, uint _spctToSwap, bool _simulate) external payable returns(uint slip10000) {
-		console.log("<<start swap>>");
+		// console.log("<<start swap>>");
 		uint conversionRate;
 		if (_spctToSwap > 0) {
 			// spct -> eth
 			bool increasedAllowance = spctContract.increaseAllowanceTX(SPCLaddress, _spctToSwap);
 			require(increasedAllowance, "allowance_fail");
-			console.log('~~~spct val will be <rate>',getSPCTtoETH10000000());
+			// console.log('~~~spct val will be <rate>',getSPCTtoETH10000000());
 			// conversionRate = getSPCTtoETH10000000();
 			conversionRate = getETHtoSPCT10000000();
 		} else {
 			// eth -> spct
-			console.log('~~~eth val will be <rate>', getETHtoSPCT10000000());
+			// console.log('~~~eth val will be <rate>', getETHtoSPCT10000000());
 			conversionRate = getSPCTtoETH10000000();
 		}
 		(uint tokenInAfterFee, uint tokenOutAmount) = spclContract.swap{value: msg.value}(_spctToSwap, msg.sender, _simulate);
 
 		bool slippageIsTolerable;
 		uint slip10000;
-		console.log("slippage input <rate>*<tokenInAfterFee>, <tokenOutAmount>", conversionRate, tokenInAfterFee, tokenOutAmount);
+		// console.log("slippage input <rate>*<tokenInAfterFee>, <tokenOutAmount>", conversionRate, tokenInAfterFee, tokenOutAmount);
 		if (_spctToSwap > 0) {
 			(slippageIsTolerable, slip10000) = slippageTolerable((conversionRate * tokenInAfterFee)/10000000, tokenOutAmount, _maxSlip);
 		} else {
 			(slippageIsTolerable, slip10000) = slippageTolerable((conversionRate * tokenInAfterFee)/10000000, tokenOutAmount, _maxSlip);
 		}		
-		console.log('<slip10000>',slip10000);
+		// console.log('<slip10000>',slip10000);
 		require(slippageIsTolerable, "too_much_slip");
 
-		console.log("<<end swap>>");
+		// console.log("<<end swap>>");
 		return slip10000;
 	}
 
@@ -119,22 +117,22 @@ contract Router is Ownable {
 	// _maxSlip unit is percent of percent, or .01 percent, or (1/10000)
 	// so, '100' = 1%, '10' = .1%, '1000' = 10%
 	function slippageTolerable(uint _nominalValue, uint _tradeValue, uint _maxSlip) internal view returns (bool, uint slip10000) {
-		console.log('slip calc vars, <nom> <trade> <slip allowed>', _nominalValue, _tradeValue, _maxSlip);
+		// console.log('slip calc vars, <nom> <trade> <slip allowed>', _nominalValue, _tradeValue, _maxSlip);
 		// uint rawSlip = ( (_nominalValue / _tradeValue) * 10000 ) - _maxSlip;
 		uint rawSlip = 10000 - ( (_tradeValue * 10000) / (_nominalValue ) ) ; // percent, *10k to allow .01% precision
 
-		console.log("<raw slip %> vs. <tolerance>", rawSlip, _maxSlip);
+		// console.log("<raw slip %> vs. <tolerance>", rawSlip, _maxSlip);
 		return (rawSlip < _maxSlip, rawSlip); 
 	}
 
 	// likely remove
 	receive() external payable {
-		console.log('receive', msg.value);
+		// console.log('receive', msg.value);
 	}
 
 	// likely remove
 	fallback () external payable {
-		console.log('fallback', msg.value);
+		// console.log('fallback', msg.value);
 	}
 }
 

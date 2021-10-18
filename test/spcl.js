@@ -40,7 +40,7 @@ describe("Pool+Router", () => {
     // console.log("spcl given to spct:", ethers.utils.formatEther(spclReceivedTreasury), treasury.address)
     expect(spclReceivedTreasury.gt("0")).to.be.equal(true);
     expect(ethers.utils.formatEther(spclReceivedTreasury.toString()).slice(0,8)).to.be.equal(("" + Math.sqrt((100*5) * 100)).slice(0,8));
-    console.log("<<<<END SETUP>>>>")
+    // console.log("<<<<END SETUP>>>>")
   };
 
   beforeEach(async () => {
@@ -66,7 +66,7 @@ describe("Pool+Router", () => {
     await tothemoon.setRouter(spclContract.address, router.address);
   });
 
-  describe.only("Spec", async () => {
+  describe("Spec", async () => {
     it("Does not allow depositing liquidity until market is opened by withdraw() call from tothemoon ICO contract", async () => {
       await expect(
         router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), 0, moreAddrs[0].address, {value: parseEther("100")})
@@ -105,20 +105,20 @@ describe("Pool+Router", () => {
       await icoPurchase();
       await openMarket();
 
-      const spclBefore = (await spclContract.totalSupply())  ;
+      // const spclBefore = (await spclContract.totalSupply())  ;
 
       // console.log(">> total supply spcl before", ethers.utils.formatEther( (await spclContract.totalSupply()).toString() ) )
       // now any wallet with SPCT should have access to the market
       await router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), 0, moreAddrs[0].address, {value: parseEther("100")});
 
       let spclReceived = await spclContract.balanceOf(moreAddrs[0].address);
-      console.log("<received> spcl vs <expected>:", formatEther(spclReceived.toString()), ("" + Math.sqrt((100*5) * 100)).slice(0,3))
+      // console.log("<received> spcl vs <expected>:", formatEther(spclReceived.toString()), ("" + Math.sqrt((100*5) * 100)).slice(0,3))
       // console.log("TREASURY <received> spcl vs <expected>:", ethers.utils.formatEther(spclReceived.toString()).slice(0,8), ("" + Math.sqrt((100*5) * 100)).slice(0,8) );
       expect(spclReceived.toString().slice(0,3)).to.be.equal(("" + Math.sqrt((100*5) * 100)).slice(0,3));
 
-      const spclAfter = (await spclContract.totalSupply())
+      // const spclAfter = (await spclContract.totalSupply())
       // console.log(">> total supply spcl after", (await spclContract.totalSupply()).toString() )
-      console.log('spcl difference after 500/100 addition to pool', formatEther(spclBefore), formatEther(spclAfter), formatEther(spclAfter.sub(spclBefore)))
+      // console.log('spcl difference after 500/100 addition to pool', formatEther(spclBefore), formatEther(spclAfter), formatEther(spclAfter.sub(spclBefore)))
     });
 
     it("Burns spcl back into spct and eth correctly (no swap fees)", async () => {
@@ -129,19 +129,19 @@ describe("Pool+Router", () => {
       await router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), 0, moreAddrs[0].address, {value: parseEther("100")});
 
       let spclReceived = await spclContract.balanceOf(moreAddrs[0].address);
-      console.log("<received> spcl vs <expected>:", formatEther(spclReceived.toString()), ("" + Math.sqrt((100*5) * 100)).slice(0,3));
+      // console.log("<received> spcl vs <expected>:", formatEther(spclReceived.toString()), ("" + Math.sqrt((100*5) * 100)).slice(0,3));
       // console.log("TREASURY <received> spcl vs <expected>:", ethers.utils.formatEther(spclReceived.toString()).slice(0,8), ("" + Math.sqrt((100*5) * 100)).slice(0,8) );
       expect(spclReceived.toString().slice(0,3)).to.be.equal(("" + Math.sqrt((100*5) * 100)).slice(0,3));
 
       const userSpctBefore = (await tothemoon.balanceOf(moreAddrs[0].address));
-      console.log('>>>spct before', formatEther(userSpctBefore).toString())
+      // console.log('>>>spct before', formatEther(userSpctBefore).toString())
 
       await expect(
         await spclContract.connect(moreAddrs[0]).burn(moreAddrs[0].address)
       ).to.changeEtherBalance(moreAddrs[0], parseEther("100"));
 
       const userSpctReturned = (await tothemoon.balanceOf(moreAddrs[0].address));
-      console.log('>>>spct returned', formatEther(userSpctReturned))
+      // console.log('>>>spct returned', formatEther(userSpctReturned))
 
       expect(await spclContract.balanceOf(moreAddrs[0].address)).to.be.equal(0);
       expect(formatEther(userSpctReturned.sub(userSpctBefore))).to.be.equal("500.0");
@@ -174,7 +174,7 @@ describe("Pool+Router", () => {
       await router.connect(addr2).swap(600, 0, false, {value: parseEther("2")});
       let addr2SPCT = (await tothemoon.balanceOf(addr2.address))
 
-      console.log('from 2 eth to:', formatEther(addr2SPCT))
+      // console.log('from 2 eth to:', formatEther(addr2SPCT))
       expect(Number(formatEther(addr2SPCT))).to.be.at.least((2*5) - ((2*5)*.06)) // specified 6% slippage with 600
       expect(Number(formatEther(addr2SPCT))).to.be.at.most((2*5)) // specified 6% slippage with 600
     });
@@ -190,12 +190,12 @@ describe("Pool+Router", () => {
       // first: buy spct
       await tothemoon.connect(moreAddrs[1]).buy({ value: parseEther("2") });
       let moreAddrsSPCTBefore = (await tothemoon.balanceOf(spclContract.address))
-      console.log("user spct before",formatEther(moreAddrsSPCTBefore))
+      // console.log("user spct before",formatEther(moreAddrsSPCTBefore))
 
       // for some reason this is returning zero, even though logs show it should return 195 (which should then be divided by 
       // 10000 to produce 0.0195% slip expected)
-      const expectedSlip = await router.connect(moreAddrs[1]).swap(10000, parseEther((5*2)+""),true)
-      console.log('expected slip (not working...)', (await expectedSlip).value.toString());
+      // const expectedSlip = await router.connect(moreAddrs[1]).swap(10000, parseEther((5*2)+""),true)
+      // console.log('expected slip (not working...)', (await expectedSlip).value.toString());
 
       const moreAddrs1BalanceBefore = await provider.getBalance(moreAddrs[1].address);
       // await expect(
@@ -204,13 +204,13 @@ describe("Pool+Router", () => {
       const moreAddrs1BalanceAfter = await provider.getBalance(moreAddrs[1].address);
 
       const moreAddrs1EthReceived = moreAddrs1BalanceAfter - moreAddrs1BalanceBefore;
-      console.log('from 10 spct to <eth>:', formatEther(moreAddrs1EthReceived))
+      // console.log('from 10 spct to <eth>:', formatEther(moreAddrs1EthReceived))
 
       expect(Number(formatEther(moreAddrs1EthReceived))).to.be.at.least(2 - (2*.06)) // specified 6% slippage with 600
       expect(Number(formatEther(moreAddrs1EthReceived))).to.be.at.most(2) // specified 6% slippage with 600
 
       moreAddrsSPCTAfter = (await tothemoon.balanceOf(spclContract.address))
-      console.log("user spct after swap...",formatEther(moreAddrsSPCTAfter))
+      // console.log("user spct after swap...",formatEther(moreAddrsSPCTAfter))
       expect(Number(formatEther(moreAddrsSPCTAfter)) - Number(formatEther(moreAddrsSPCTBefore))).to.be.equal(10)
     });
  
@@ -222,12 +222,12 @@ describe("Pool+Router", () => {
       await router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), 0, moreAddrs[0].address, {value: parseEther("100")});
 
       let spclReceived = await spclContract.balanceOf(moreAddrs[0].address);
-      console.log("<received> spcl vs <expected>:", formatEther(spclReceived.toString()), ("" + Math.sqrt((100*5) * 100)).slice(0,3));
+      // console.log("<received> spcl vs <expected>:", formatEther(spclReceived.toString()), ("" + Math.sqrt((100*5) * 100)).slice(0,3));
       // console.log("TREASURY <received> spcl vs <expected>:", ethers.utils.formatEther(spclReceived.toString()).slice(0,8), ("" + Math.sqrt((100*5) * 100)).slice(0,8) );
       expect(spclReceived.toString().slice(0,3)).to.be.equal(("" + Math.sqrt((100*5) * 100)).slice(0,3));
 
       const userSpctBefore = (await tothemoon.balanceOf(moreAddrs[0].address));
-      console.log('>>>spct before', formatEther(userSpctBefore).toString())
+      // console.log('>>>spct before', formatEther(userSpctBefore).toString())
 
       await router.connect(addr2).swap(600, 0, false, {value: parseEther("2")});
       let addr2SPCT = (await tothemoon.balanceOf(addr2.address))
@@ -237,7 +237,7 @@ describe("Pool+Router", () => {
       ).to.changeEtherBalance(moreAddrs[0], parseEther("101")); // 2 eth went into pool, and moreAddrs[0] owns 50% of pool
 
       const userSpctReturned = (await tothemoon.balanceOf(moreAddrs[0].address));
-      console.log('>>>spct returned', formatEther(userSpctReturned))
+      // console.log('>>>spct returned', formatEther(userSpctReturned))
 
       expect(await spclContract.balanceOf(moreAddrs[0].address)).to.be.equal(0);
       expect(Number(formatEther(userSpctReturned.sub(userSpctBefore)))).to.be.lessThan(500);

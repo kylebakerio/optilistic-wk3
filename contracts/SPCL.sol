@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 // import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -25,7 +25,7 @@ contract SPCL is ERC20 {
 
 	function addLiquidity(address _who, uint _amountSPCT) public payable {
 		if (spctContract.balanceOf(address(this)) == 0) {
-			console.log("initial liquidity event spcl; from:",_who);
+			// console.log("initial liquidity event spcl; from:",_who);
 			// adding first liquidity
 			spctContract.transferFrom(_who, address(this), _amountSPCT);
 			uint spctLiquidityAdded = spctContract.balanceOf(address(this));
@@ -34,7 +34,7 @@ contract SPCL is ERC20 {
 		} else {
 			// already have liquidity
 			uint spctToAccept = quote(msg.value, address(this).balance, spctContract.balanceOf(address(this)));
-			console.log("given <eth> accept <spct>; was given <spct>>", msg.value / 1 ether, spctToAccept / 1 ether, _amountSPCT / 1 ether);
+			// console.log("given <eth> accept <spct>; was given <spct>>", msg.value / 1 ether, spctToAccept / 1 ether, _amountSPCT / 1 ether);
 			require(_amountSPCT >= spctToAccept, "insufficient_spct_provided");
 			uint existingLiquidity = spctContract.balanceOf(address(this));
 			spctContract.transferFrom(_who, address(this), spctToAccept);
@@ -45,7 +45,7 @@ contract SPCL is ERC20 {
 
 	function mint(address _who, uint spctAdded, uint ethAdded) private {
 		uint amountToMint = Babylonian.sqrt(spctAdded * ethAdded);
-		console.log("minting <spcl> <to>:", amountToMint, amountToMint / 1 ether, _who);
+		// console.log("minting <spcl> <to>:", amountToMint, amountToMint / 1 ether, _who);
 		_mint(_who, amountToMint);
 	}
 
@@ -53,19 +53,14 @@ contract SPCL is ERC20 {
 		uint toBurn = balanceOf(_withdrawTo);
 		uint contractETH = address(this).balance;
 		uint contractSPCT = spctContract.balanceOf(address(this));
-		// uint totalSupply = contractETH + contractSPCT;
 		uint totalSupply = totalSupply();
 		uint hydratedSPCL = toBurn ** 2;
-		console.log('totalsupply', totalSupply / 1 ether);
-		// uint poolRatio = toBurn / totalSupply;
-		// spclToETH = poolRatio * contractSPCT;
-		// spclToSPCT = poolRatio * contractETH;
+		// console.log('totalsupply', totalSupply / 1 ether);
 		spclToETH = contractETH / (totalSupply / toBurn);
 		spclToSPCT = contractSPCT / (totalSupply / toBurn);
-		console.log('contract <eth> <spct>', contractETH / 1 ether, contractSPCT / 1 ether);
-		console.log('<spcl> turned into <eth> & <spct>', toBurn / 1 ether, spclToETH / 1 ether, spclToSPCT / 1 ether);
+		// console.log('contract <eth> <spct>', contractETH / 1 ether, contractSPCT / 1 ether);
+		// console.log('<spcl> turned into <eth> & <spct>', toBurn / 1 ether, spclToETH / 1 ether, spclToSPCT / 1 ether);
 		_burn(_withdrawTo, toBurn);
-		// spctContract.increaseAllowance(_withdrawTo, spclToSPCT);
 		spctContract.transfer(_withdrawTo, spclToSPCT);
 		(bool sent, ) = _withdrawTo.call{value: spclToETH}("");
         require(sent, "sending_eth_failed");
@@ -77,7 +72,7 @@ contract SPCL is ERC20 {
 	// or, for us: given X of eth, return needed Y of spct
 	// "given some amount of an asset and pair reserves, returns an equivalent amount of the other asset"
 	function quote(uint ethDeposit, uint ethReserve, uint spctReserve) internal view returns (uint spctDeposit) {
-		console.log("quote, reserves: <eth> & <spct>", ethReserve / 1 ether, spctReserve / 1 ether);
+		// console.log("quote, reserves: <eth> & <spct>", ethReserve / 1 ether, spctReserve / 1 ether);
 	    require(ethDeposit > 0, 'spcl: no_eth_provided');
 	    require(ethReserve > 0 && spctReserve > 0, 'spcl: no_reserves');
 	    spctDeposit = (ethDeposit * spctReserve) / (ethReserve - msg.value);
@@ -93,7 +88,7 @@ contract SPCL is ERC20 {
 		uint tokenInAfterFee;
 		uint tokenOutAmount;
 		if (_spctToSwap > 0) {
-			console.log("SPCT -> ETH <spctIn>", _spctToSwap);
+			// console.log("SPCT -> ETH <spctIn>", _spctToSwap);
 			reserveTokenIn = spctContract.balanceOf(address(this));
 			reserveTokenOut = address(this).balance;
 			tokenInAfterFee = (_spctToSwap * 99) / 100;
@@ -102,39 +97,39 @@ contract SPCL is ERC20 {
 			if (_simulate == false) {
 				spctContract.transferFrom(recipient, address(this), _spctToSwap);
 
-				console.log("sending eth <to> <amt>", recipient, tokenOutAmount);
+				// console.log("sending eth <to> <amt>", recipient, tokenOutAmount);
 				(bool sent, ) = recipient.call{value: tokenOutAmount}("");
 		        require(sent, "sending_eth_failed");
 			}
 			else {
-				console.log("simulation, will not send <tokenOutAmount> to <recipient>",tokenOutAmount,recipient);
+				// console.log("simulation, will not send <tokenOutAmount> to <recipient>",tokenOutAmount,recipient);
 			}
 		} else {
-			console.log("ETH -> SPCT <ethIn>", msg.value);
+			// console.log("ETH -> SPCT <ethIn>", msg.value);
 			reserveTokenIn = address(this).balance;
 			reserveTokenOut = spctContract.balanceOf(address(this));
 			tokenInAfterFee = (msg.value * 99) / 100;
 			tokenOutAmount = reserveTokenOut - (reserveTokenIn * reserveTokenOut) / (reserveTokenIn + tokenInAfterFee);
 			
 			if (_simulate == false) {
-				console.log("sending spct <to> <amt>", recipient, tokenOutAmount);
+				// console.log("sending spct <to> <amt>", recipient, tokenOutAmount);
 				spctContract.transfer(recipient, tokenOutAmount);
 			}
 			else {
-				console.log("simulation, will not send <tokenOutAmount> to <recipient>",tokenOutAmount,recipient);
+				// console.log("simulation, will not send <tokenOutAmount> to <recipient>",tokenOutAmount,recipient);
 			}
 		}
-		console.log("spcl swap: <tokenInAfterFee> <tokenOutAmount>", tokenInAfterFee, tokenOutAmount );
+		// console.log("spcl swap: <tokenInAfterFee> <tokenOutAmount>", tokenInAfterFee, tokenOutAmount );
 		return (tokenInAfterFee, tokenOutAmount);
 	}
 
 
 	receive() external payable {
-		console.log('spcl receive', msg.value);
+		// console.log('spcl receive', msg.value);
 	}
 
 	fallback () external payable {
-		console.log('spcl fallback', msg.value);
+		// console.log('spcl fallback', msg.value);
 	}
 }
 

@@ -101,7 +101,7 @@ describe("SPCToken", () => {
     });
   });
 
-  describe.only("wk3", async () => {
+  describe("wk3", async () => {
     it("Allows owner to initially withdraw 5:1 amounts SPCT/ETH to liquidity pool", async () => {
       // progress phase, buy to load up some fundraised cash in treasury
 
