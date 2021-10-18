@@ -174,3 +174,9 @@ const contract = new ethers.Contract('0xC2CA5E96069d1678B62704F9791cdaE798dE1C4A
   }
 
 })()
+
+
+// new contracts:
+// ToTheMoon address: 0xdA29917763de7e701d5296f308Ae74D4a9bd8ddB
+// spcl address: 0x9303D518F8883eeB21248263dD0fbc145Ee78bb7
+// router address: 0xe86ede9eff2e702575387a05f8ee4a6b47db9ccd

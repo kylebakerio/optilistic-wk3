@@ -1,5 +1,7 @@
+const hre = require("hardhat");
+
 async function main() {
-  let [deployer] = await ethers.getSigners();
+  let [deployer] = await hre.ethers.getSigners();
 
   const gabsPubKey = '0x92c9Ce45fdBA89F810F8580120adacB6e9e7657F';
   const myPubKey1 = '0xCA6b8EaB76F76B458b1c43c0C5f500b33f63F475';
@@ -10,28 +12,30 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address); // should match myPubKey1, btw
 
   const preDeployBalance = (await deployer.getBalance()).toString();
-  console.log("Account balance before:", preDeployBalance);
+  console.log("Account balance before deploy:", preDeployBalance);
 
-  // probably don't need to be deploying this separately, actually.
   // const SPCToken = await ethers.getContractFactory("SPCToken");
   // const spctoken = await SPCToken.deploy(treasuryAddr);
   // console.log("SPCToken address:", spctoken.address);
 
   const whitelist = [gabsPubKey, myPubKey1, myPubKey2];
-  const ToTheMoon = await ethers.getContractFactory("ToTheMoon");
+  const ToTheMoon = await hre.ethers.getContractFactory("ToTheMoon");
   const tothemoon = await ToTheMoon.deploy(whitelist);
 
-  const SPCL = await ethers.getContractFactory("SPCL");
+  const SPCL = await hre.ethers.getContractFactory("SPCL");
   const spcl = await SPCL.deploy(tothemoon.address);
 
-  const Router = await ethers.getContractFactory("Router");
+  const Router = await hre.ethers.getContractFactory("Router");
   const router = await Router.deploy(tothemoon.address, spcl.address);
+
+  await tothemoon.setRouter(router.address);
 
   console.log("ToTheMoon address:", tothemoon.address);
   console.log("spcl address:", spcl.address);
+  console.log("router address:", router.address);
   console.log("Whitelisted contributors:", whitelist);
 
-  // this doesn't work, probably because we're not waiting for the next block...? maybe?
+  // this doesn't work, probably because we're not waiting for the next block...?
   // const postDeployBalance = (await deployer.getBalance()).toString();
   // console.log("Account balance after:", postDeployBalance);
   // console.log("Cost:",preDeployBalance - postDeployBalance);

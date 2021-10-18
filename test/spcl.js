@@ -95,7 +95,7 @@ describe("Pool+Router", () => {
       // now any wallet with SPCT should have access to the market
       await expect(
         router.connect(moreAddrs[0]).addLiquidity(parseEther("400"), moreAddrs[0].address, {value: parseEther("100")})
-      ).to.be.revertedWith('insufficient_spct');
+      ).to.be.revertedWith('insufficient_spct_offered');
 
       let spclReceived = await spclContract.balanceOf(moreAddrs[0].address);
       expect(spclReceived.gt(0)).to.be.equal(false);

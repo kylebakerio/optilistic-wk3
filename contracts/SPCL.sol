@@ -16,6 +16,11 @@ contract SPCL is ERC20 {
 	ISPCT public spctContract;
 	address public SPCTaddress;
 
+	event Mint(address liquidityProvider, uint liquidityTokens);
+	event Burn(address liquidityProvider, uint ethReturned, uint spctReturned);
+	event SwapEth(address swapper, uint ethIn, uint spctOut);
+	event SwapSpct(address swapper, uint spctIn, uint ethOut);
+
 	constructor(address _SPCT) ERC20('SpaceLiquidityPool', 'SPCL') {
 		SPCTaddress = _SPCT;
 		spctContract = ISPCT(SPCTaddress);
@@ -30,24 +35,27 @@ contract SPCL is ERC20 {
 	}
 
 	function mint(address _who, uint _amountSPCT) public payable lock {
+		uint spctLiquidityAdded;
 		if (spctContract.balanceOf(address(this)) == 0) {
 			// console.log("initial liquidity event spcl; from:",_who);
 			// adding first liquidity
 			spctContract.transferFrom(_who, address(this), _amountSPCT);
-			uint spctLiquidityAdded = spctContract.balanceOf(address(this));
-			require(spctLiquidityAdded > 0, "no_spct_added");
+			spctLiquidityAdded = spctContract.balanceOf(address(this));
 		} else {
 			// already have liquidity
 			uint spctToAccept = quote(msg.value, address(this).balance, spctContract.balanceOf(address(this)));
+			require(_amountSPCT >= spctToAccept, "insufficient_spct_offered");
 			// console.log("given <eth> accept <spct>; was given <spct>>", msg.value / 1 ether, spctToAccept / 1 ether, _amountSPCT / 1 ether);
-			require(_amountSPCT >= spctToAccept, "insufficient_spct_provided");
 			uint existingLiquidity = spctContract.balanceOf(address(this));
 			spctContract.transferFrom(_who, address(this), spctToAccept);
-			uint spctLiquidityAdded = spctContract.balanceOf(address(this)) - existingLiquidity;
+			spctLiquidityAdded = spctContract.balanceOf(address(this)) - existingLiquidity;
+			require(spctLiquidityAdded >= spctToAccept, "insufficient_spct_received");
 		}
-		uint amountToMint = Babylonian.sqrt(_amountSPCT * msg.value);
+		require(spctLiquidityAdded > 0, "no_spct_added");
+		uint amountToMint = Babylonian.sqrt(spctLiquidityAdded * msg.value);
 		// console.log("minting <spcl> <to>:", amountToMint, amountToMint / 1 ether, _who);
 		_mint(_who, amountToMint);
+		emit Mint(_who, amountToMint);
 	}
 
 	function burn(uint _howMuchSPCL, address _withdrawTo) public lock returns(uint spclToETH, uint spclToSPCT) {
@@ -64,6 +72,7 @@ contract SPCL is ERC20 {
 		spctContract.transfer(_withdrawTo, spclToSPCT);
 		(bool sent, ) = _withdrawTo.call{value: spclToETH}("");
         require(sent, "sending_eth_failed");
+        emit Burn(_withdrawTo, spclToETH, spclToSPCT);
 	}
 
 	// lifted close to directly from https://github.com/Uniswap/v2-periphery/blob/master/contracts/libraries/UniswapV2Library.sol#L35
@@ -100,6 +109,7 @@ contract SPCL is ERC20 {
 				// console.log("sending eth <to> <amt>", recipient, tokenOutAmount);
 				(bool sent, ) = recipient.call{value: tokenOutAmount}("");
 		        require(sent, "sending_eth_failed");
+		        emit SwapSpct(recipient, _spctToSwap, tokenOutAmount);
 			}
 			else {
 				// console.log("simulation, will not send <tokenOutAmount> to <recipient>",tokenOutAmount,recipient);
@@ -114,6 +124,7 @@ contract SPCL is ERC20 {
 			if (_simulate == false) {
 				// console.log("sending spct <to> <amt>", recipient, tokenOutAmount);
 				spctContract.transfer(recipient, tokenOutAmount);
+				emit SwapEth(recipient, msg.value, tokenOutAmount);
 			}
 			else {
 				// console.log("simulation, will not send <tokenOutAmount> to <recipient>",tokenOutAmount,recipient);
