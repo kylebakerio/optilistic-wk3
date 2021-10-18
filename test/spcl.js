@@ -274,12 +274,6 @@ describe("Pool+Router", () => {
       // anything about correctness, and can only test consistency.
       expect(Math.round(Number(formatEther(userSpctReturned.sub(userSpctBefore))))).to.be.equal(495);
     });
-
-
-    // tests to do:
-      // use router instead of scpl for burning
-      // minimums when removing liquidity
-      // k is kept constant
   });
 
 });
