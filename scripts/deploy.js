@@ -19,15 +19,22 @@ async function main() {
 
   const whitelist = [gabsPubKey, myPubKey1, myPubKey2];
   const ToTheMoon = await ethers.getContractFactory("ToTheMoon");
-  const tothemoon = await ToTheMoon.deploy(whitelist, treasuryAddr);
+  const tothemoon = await ToTheMoon.deploy(whitelist);
+
+  const SPCL = await ethers.getContractFactory("SPCL");
+  const spcl = await SPCL.deploy(tothemoon.address);
+
+  const Router = await ethers.getContractFactory("Router");
+  const router = await Router.deploy(tothemoon.address, spcl.address);
 
   console.log("ToTheMoon address:", tothemoon.address);
+  console.log("spcl address:", spcl.address);
   console.log("Whitelisted contributors:", whitelist);
 
   // this doesn't work, probably because we're not waiting for the next block...? maybe?
   // const postDeployBalance = (await deployer.getBalance()).toString();
   // console.log("Account balance after:", postDeployBalance);
-  // console.log("Cost:",preDeplaoyBalance - postDeployBalance);
+  // console.log("Cost:",preDeployBalance - postDeployBalance);
 }
 
 main()

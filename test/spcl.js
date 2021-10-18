@@ -63,7 +63,7 @@ describe("Pool+Router", () => {
     const Router = await ethers.getContractFactory("Router");
     router = await Router.deploy(tothemoon.address, spclContract.address);
 
-    await tothemoon.setRouter(spclContract.address, router.address);
+    await tothemoon.setRouter(router.address);
   });
 
   describe("Spec", async () => {
@@ -87,7 +87,7 @@ describe("Pool+Router", () => {
       expect(spclReceived.gt(0)).to.be.equal(true);
     });
 
-    it("Rejects liquidity being added if not enough SPCT is provided", async () => {
+    it("Rejects liquidity being added if insufficient SPCT is provided", async () => {
       await icoPurchase();
 
       await openMarket()

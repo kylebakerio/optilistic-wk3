@@ -16,7 +16,7 @@ contract SPCL is ERC20 {
 	ISPCT public spctContract;
 	address public SPCTaddress;
 
-	constructor(address _SPCT/*, address _router*/) ERC20('SpaceLiquidityPool', 'SPCL') {
+	constructor(address _SPCT) ERC20('SpaceLiquidityPool', 'SPCL') {
 		SPCTaddress = _SPCT;
 		spctContract = ISPCT(SPCTaddress);
 	}

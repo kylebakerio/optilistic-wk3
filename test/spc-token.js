@@ -26,7 +26,7 @@ describe("SPCToken", () => {
     const Router = await ethers.getContractFactory("Router");
     router = await Router.deploy(tothemoon.address, spclContract.address);
 
-    await tothemoon.setRouter(spclContract.address, router.address);
+    await tothemoon.setRouter(router.address);
 
     if (first) {
       first = false;

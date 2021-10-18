@@ -36,8 +36,7 @@ contract ToTheMoon is SPCToken {
         }
     }
 
-    function setRouter(address _liqudityPool, address _router) external onlyOwner {
-        spclAddress = _liqudityPool;
+    function setRouter(address _router) external onlyOwner {
         routerAddress = _router;
         router = IRouter(_router);
     }
