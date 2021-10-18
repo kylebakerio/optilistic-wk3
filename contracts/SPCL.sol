@@ -15,12 +15,18 @@ interface ISPCT is IERC20 {
 contract SPCL is ERC20 {
 	ISPCT public spctContract;
 	address public SPCTaddress;
-	// address public router;
 
 	constructor(address _SPCT/*, address _router*/) ERC20('SpaceLiquidityPool', 'SPCL') {
 		SPCTaddress = _SPCT;
 		spctContract = ISPCT(SPCTaddress);
-		// router = _router;
+	}
+
+	uint private unlocked = 1;
+	modifier lock() {
+	    require(unlocked == 1, 'UniswapV2: LOCKED');
+	    unlocked = 0;
+	    _;
+	    unlocked = 1;
 	}
 
 	function addLiquidity(address _who, uint _amountSPCT) public payable {
@@ -43,18 +49,17 @@ contract SPCL is ERC20 {
 		}
 	}
 
-	function mint(address _who, uint spctAdded, uint ethAdded) private {
+	function mint(address _who, uint spctAdded, uint ethAdded) private lock {
 		uint amountToMint = Babylonian.sqrt(spctAdded * ethAdded);
 		// console.log("minting <spcl> <to>:", amountToMint, amountToMint / 1 ether, _who);
 		_mint(_who, amountToMint);
 	}
 
-	function burn(uint _howMuchSPCL, address _withdrawTo) public returns(uint spclToETH, uint spclToSPCT) {
+	function burn(uint _howMuchSPCL, address _withdrawTo) public lock returns(uint spclToETH, uint spclToSPCT) {
 		uint toBurn = _howMuchSPCL; // balanceOf(_withdrawTo);
 		uint contractETH = address(this).balance;
 		uint contractSPCT = spctContract.balanceOf(address(this));
 		uint totalSupply = totalSupply();
-		uint hydratedSPCL = toBurn ** 2;
 		// console.log('totalsupply', totalSupply / 1 ether);
 		spclToETH = contractETH / (totalSupply / toBurn);
 		spclToSPCT = contractSPCT / (totalSupply / toBurn);
@@ -82,7 +87,7 @@ contract SPCL is ERC20 {
 	// for swapping spct <-> eth; 
 	// if _spctToSwap is > 0, swaps spct -> eth; 
 	// if _spctToSwap = 0, swaps eth -> spct
-	function swap(uint _spctToSwap, address recipient, bool _simulate) external payable returns(uint tokenInAfterFee, uint tokenOutAmount) {
+	function swap(uint _spctToSwap, address recipient, bool _simulate) external payable lock returns(uint, uint) {
 		uint reserveTokenOut;
 		uint reserveTokenIn;
 		uint tokenInAfterFee;
