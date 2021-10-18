@@ -3,18 +3,17 @@ pragma solidity ^0.8.0;
 
 // import "hardhat/console.sol";
 
-// import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import '@uniswap/lib/contracts/libraries/Babylonian.sol';
 
-interface ISPCT is IERC20 {
-	function increaseAllowance(address, uint256) external returns (bool);
-}
+interface ISPCT is IERC20 {}
 
-contract SPCL is ERC20 {
+contract SPCL is ERC20, Ownable {
 	ISPCT public spctContract;
 	address public SPCTaddress;
+	bool public marketOpen = false;
 
 	event Mint(address liquidityProvider, uint liquidityTokens);
 	event Burn(address liquidityProvider, uint ethReturned, uint spctReturned);
@@ -35,6 +34,12 @@ contract SPCL is ERC20 {
 	}
 
 	function mint(address _who, uint _amountSPCT) public payable lock {
+		// console.log("<msg.sender>, <tx.origin>, <SPCTaddress>", msg.sender, tx.origin, SPCTaddress);
+		require(marketOpen || _who == owner(), "market_closed");
+		if (!marketOpen) {
+			marketOpen = true;
+		}
+
 		uint spctLiquidityAdded;
 		if (spctContract.balanceOf(address(this)) == 0) {
 			// console.log("initial liquidity event spcl; from:",_who);
@@ -92,6 +97,7 @@ contract SPCL is ERC20 {
 	// if _spctToSwap is > 0, swaps spct -> eth; 
 	// if _spctToSwap = 0, swaps eth -> spct
 	function swap(uint _spctToSwap, address recipient, bool _simulate) external payable lock returns(uint, uint) {
+		require(marketOpen, "market_closed");
 		uint reserveTokenOut;
 		uint reserveTokenIn;
 		uint tokenInAfterFee;

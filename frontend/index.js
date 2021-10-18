@@ -177,6 +177,13 @@ const contract = new ethers.Contract('0xC2CA5E96069d1678B62704F9791cdaE798dE1C4A
 
 
 // new contracts:
-// ToTheMoon address: 0xdA29917763de7e701d5296f308Ae74D4a9bd8ddB
-// spcl address: 0x9303D518F8883eeB21248263dD0fbc145Ee78bb7
-// router address: 0xe86ede9eff2e702575387a05f8ee4a6b47db9ccd
+// Deploying contracts with the account: 0xCA6b8EaB76F76B458b1c43c0C5f500b33f63F475
+// Account balance before deploy: 5603615802277069226
+// ToTheMoon address: 0x84385c50b09B77cDB9058E94F78dce06D66E25De
+// spcl address: 0xb0655f7c94902bCb13e600Eb25eF423D1D7e75Af
+// router address: 0xAcAa4833646eE3d019F4904074A4B644E2222e93
+// Whitelisted contributors: [
+//   '0x92c9Ce45fdBA89F810F8580120adacB6e9e7657F',
+//   '0xCA6b8EaB76F76B458b1c43c0C5f500b33f63F475',
+//   '0xeF3d604297aF0FA63d175233B01Db945F9676Fdb'
+// ]

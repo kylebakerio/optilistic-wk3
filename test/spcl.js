@@ -27,9 +27,11 @@ describe("Pool+Router", () => {
 
   async function openMarket() {
     // make initial purchase at 5:1 ratio via withdraw(), which opens the market
+    // console.log("ATTEMPT TO OPEN MARKET")
     await expect(
       await tothemoon.connect(owner).withdraw()
     ).to.changeEtherBalance(spclContract, parseEther("100"));
+    // console.log("MARKET CALL 1 MADE, MARKET SHOULD BE OPEN")
 
     // withdrawl should also send spct to contract
     let liquidSPCT = await tothemoon.balanceOf(spclContract.address);

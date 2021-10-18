@@ -20,7 +20,6 @@ contract Router is Ownable {
 	address public SPCTaddress;
 	ISPCL public spclContract;
 	address public SPCLaddress;
-	bool marketOpen = false;
 
 	constructor(address _SPCT, address _SPCL) {
 		SPCTaddress = _SPCT;
@@ -51,14 +50,6 @@ contract Router is Ownable {
 	}
 
 	function addLiquidity(uint amountSPCT, address spclReceiver) external payable {
-		// "These are the minimum acceptable amounts to deposit. If the transaction cannot take place with these amounts or more, revert out of it. If you don't want this feature, just specify zero."
-		require(marketOpen || msg.sender == SPCTaddress, "market_closed");
-		if (!marketOpen) {
-			marketOpen = true;
-		}
-
-		// console.log('router:addLiquidity',msg.value / 1 ether, amountSPCT / 1 ether);
-
 		bool increasedAllowance = spctContract.increaseAllowanceTX(SPCLaddress, amountSPCT);
 		require(increasedAllowance, "allowance_fail"); // (spender, amount)
 
