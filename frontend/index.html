@@ -24,25 +24,25 @@
 
 <ul class="nav nav-tabs">
   <li onclick="window.handleTabClick.bind(this)()" role="presentation" class="active"><a href="#">ICO</a></li>
-  <li onclick="window.handleTabClick.bind(this)()" role="presentation" ><a href="#">Liquidity</a></li>
-  <li onclick="window.handleTabClick.bind(this)()" role="presentation" ><a href="#">Swap</a></li>
+  <li onclick="window.handleTabClick.bind(this)()" role="presentation" class="on-market-open disabled"><a href="#">Liquidity</a></li>
+  <li onclick="window.handleTabClick.bind(this)()" role="presentation" class="on-market-open disabled"><a href="#">Swap</a></li>
 </ul>
 <br/><br/>
 <div id="ICO">
-     <!-- onlyOwner buttons -->
-     <a href="#" style="display:none;" onclick="Phase()" class="owner-only btn btn-primary">Next Phase</a>
-     <a href="#" style="display:none;" onclick="Pause()" class="owner-only btn btn-primary">Pause SPCToken</a>
-     <a href="#" style="display:none;" onclick="Tax()" class="owner-only btn btn-primary">Toggle Tax</a>
-
-     <br/>
-     <br/>
- <!-- buy interface -->
- <input oninput="
-    document.querySelector('#buy-button').innerHTML = `Buy ${document.querySelector('#buy-input').value} SPCToken`
-    document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
- " type="number" id="buy-input" placeholder="spct to buy"/>
- <a href="#" id="buy-button" onclick="Buy()" class="disabled btn btn-primary">Buy SPCToken</a>
- <p style="display:inline;" id="to-eth"> 1 ETH : 5 SPCT</p>
+    <!-- onlyOwner buttons -->
+    <a href="#" style="display:none;" onclick="Phase()" class="owner-only btn btn-primary">Next Phase</a>
+    <a href="#" style="display:none;" onclick="Pause()" class="owner-only btn btn-primary">Pause SPCToken</a>
+    <a href="#" style="display:none;" onclick="Tax()" class="owner-only btn btn-primary">Toggle Tax</a>
+    <a href="#" style="display:none;" onclick="Withdraw()" class="owner-only btn btn-primary">Withdraw To SPCL</a>
+    <br/>
+    <br/>
+     <!-- buy interface -->
+     <input oninput="
+        document.querySelector('#buy-button').innerHTML = `Buy ${document.querySelector('#buy-input').value} SPCToken`
+        document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
+     " type="number" id="buy-input" placeholder="spct to buy"/>
+     <a href="#" id="buy-button" onclick="Buy()" class="disabled btn btn-primary">Buy SPCToken</a>
+     <p style="display:inline;" id="to-eth"> 1 ETH : 5 SPCT</p>
      <br/>
      <br/>
      <div class="table-responsive">
@@ -192,6 +192,11 @@
          <td id="spcl-pool-total">       
             <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
         </tr>
+        <tr>
+         <td>Value of 1 SPCL</td>
+         <td id="spcl-pool-total">       
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
         <!-- <tr>
          <td>Token Transaction Tax</td>
          <td id="tax">       
@@ -318,8 +323,9 @@
 <script src="./abi.js"></script>
 <script src="./index.js"></script>
 <script>
-    window.handleTabClick = function(el) {
-      console.log(this, el)
+    window.handleTabClick = function() {
+      if (this.classList.contains("disabled")) return
+
       document.querySelector('.nav-tabs').querySelector('.active').classList.remove('active')
       this.classList.add('active')
       const tabName = document.getElementById(this.innerText);
