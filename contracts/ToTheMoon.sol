@@ -7,7 +7,7 @@ import "./SPCToken.sol";
 
 interface IRouter {
     function getSPCTtoETH10000000() external view returns(uint);
-    function addLiquidity(uint amountSPCT, uint maxSlippage, address spclReceiver) external payable;
+    function addLiquidity(uint amountSPCT, address spclReceiver) external payable;
     function haveLiquidity() external view returns(bool);
 }
 
@@ -79,11 +79,11 @@ contract ToTheMoon is SPCToken {
             // console.log("before call");
             uint spctPrice = router.getSPCTtoETH10000000() / 10000000;
             // console.log("has liquidity, adding more liquidity, price is", spctPrice);
-            router.addLiquidity{value: address(this).balance}(spctPrice * address(this).balance, 0, treasury);
+            router.addLiquidity{value: ethBalance}(spctPrice * ethBalance, treasury);
         }
         else {
             // console.log("no liquidity, initial liquidity add event");
-            router.addLiquidity{value: address(this).balance}(5 * address(this).balance, 0, treasury);
+            router.addLiquidity{value: ethBalance}(5 * ethBalance, treasury);
         }
     }
 

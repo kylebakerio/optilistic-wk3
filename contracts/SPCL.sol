@@ -29,14 +29,13 @@ contract SPCL is ERC20 {
 	    unlocked = 1;
 	}
 
-	function addLiquidity(address _who, uint _amountSPCT) public payable {
+	function mint(address _who, uint _amountSPCT) public payable lock {
 		if (spctContract.balanceOf(address(this)) == 0) {
 			// console.log("initial liquidity event spcl; from:",_who);
 			// adding first liquidity
 			spctContract.transferFrom(_who, address(this), _amountSPCT);
 			uint spctLiquidityAdded = spctContract.balanceOf(address(this));
 			require(spctLiquidityAdded > 0, "no_spct_added");
-			mint(_who, spctLiquidityAdded, msg.value);
 		} else {
 			// already have liquidity
 			uint spctToAccept = quote(msg.value, address(this).balance, spctContract.balanceOf(address(this)));
@@ -45,12 +44,8 @@ contract SPCL is ERC20 {
 			uint existingLiquidity = spctContract.balanceOf(address(this));
 			spctContract.transferFrom(_who, address(this), spctToAccept);
 			uint spctLiquidityAdded = spctContract.balanceOf(address(this)) - existingLiquidity;
-			mint(_who, spctLiquidityAdded, msg.value);
 		}
-	}
-
-	function mint(address _who, uint spctAdded, uint ethAdded) private lock {
-		uint amountToMint = Babylonian.sqrt(spctAdded * ethAdded);
+		uint amountToMint = Babylonian.sqrt(_amountSPCT * msg.value);
 		// console.log("minting <spcl> <to>:", amountToMint, amountToMint / 1 ether, _who);
 		_mint(_who, amountToMint);
 	}

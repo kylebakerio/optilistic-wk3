@@ -10,7 +10,7 @@ interface ISPCT is IERC20 {
 	function owner() external view returns (address);
 }
 interface ISPCL is IERC20 {
-	function addLiquidity(address, uint) external payable;
+	function mint(address, uint) external payable;
 	function burn(uint _howMuchSPCL, address _withdrawTo) external returns(uint eth, uint spct);
 	function swap(uint _spctToSwap, address recipient, bool _simulate) external payable returns(uint tokenInAfterFee, uint tokenOutAmount);
 }
@@ -50,7 +50,7 @@ contract Router is Ownable {
 		return scaledPrice;
 	}
 
-	function addLiquidity(uint amountSPCT, uint maxSlippage, address spclReceiver) external payable {
+	function addLiquidity(uint amountSPCT, address spclReceiver) external payable {
 		// "These are the minimum acceptable amounts to deposit. If the transaction cannot take place with these amounts or more, revert out of it. If you don't want this feature, just specify zero."
 		require(marketOpen || msg.sender == SPCTaddress, "market_closed");
 		if (!marketOpen) {
@@ -62,7 +62,7 @@ contract Router is Ownable {
 		bool increasedAllowance = spctContract.increaseAllowanceTX(SPCLaddress, amountSPCT);
 		require(increasedAllowance, "allowance_fail"); // (spender, amount)
 
-		spclContract.addLiquidity{value: msg.value}(spclReceiver, amountSPCT);
+		spclContract.mint{value: msg.value}(spclReceiver, amountSPCT);
 	}
 
 	function removeLiquidity(uint _howMuchSPCL, address _withdrawTo, uint _minEth, uint _minSPCT) external returns(uint eth, uint spct) {
@@ -76,7 +76,7 @@ contract Router is Ownable {
 	// for swapping spct <-> eth; 
 	// if _spctToSwap is > 0, swaps spct -> eth; 
 	// if _spctToSwap = 0, swaps eth -> spct
-	function swap(uint _maxSlip, uint _spctToSwap, bool _simulate) external payable returns(uint slip10000) {
+	function swap(uint _maxSlip, uint _spctToSwap, bool _simulate) external payable returns(uint) {
 		// console.log("<<start swap>>");
 		uint conversionRate;
 		if (_spctToSwap > 0) {
@@ -116,7 +116,7 @@ contract Router is Ownable {
 
 	// _maxSlip unit is percent of percent, or .01 percent, or (1/10000)
 	// so, '100' = 1%, '10' = .1%, '1000' = 10%
-	function slippageTolerable(uint _nominalValue, uint _tradeValue, uint _maxSlip) internal view returns (bool, uint slip10000) {
+	function slippageTolerable(uint _nominalValue, uint _tradeValue, uint _maxSlip) internal pure returns (bool, uint slip10000) {
 		// console.log('slip calc vars, <nom> <trade> <slip allowed>', _nominalValue, _tradeValue, _maxSlip);
 		// uint rawSlip = ( (_nominalValue / _tradeValue) * 10000 ) - _maxSlip;
 		uint rawSlip = 10000 - ( (_tradeValue * 10000) / (_nominalValue ) ) ; // percent, *10k to allow .01% precision

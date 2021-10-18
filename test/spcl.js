@@ -69,19 +69,19 @@ describe("Pool+Router", () => {
   describe("Spec", async () => {
     it("Does not allow depositing liquidity until market is opened by withdraw() call from tothemoon ICO contract", async () => {
       await expect(
-        router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), 0, moreAddrs[0].address, {value: parseEther("100")})
+        router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), moreAddrs[0].address, {value: parseEther("100")})
       ).to.be.revertedWith("market_closed");
 
       await icoPurchase();
 
       await expect(
-        router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), 0, moreAddrs[0].address, {value: parseEther("100")})
+        router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), moreAddrs[0].address, {value: parseEther("100")})
       ).to.be.revertedWith("market_closed");
 
       await openMarket()
 
       // now any wallet with SPCT should have access to the market
-      await router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), 0, moreAddrs[0].address, {value: parseEther("100")});
+      await router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), moreAddrs[0].address, {value: parseEther("100")});
 
       let spclReceived = await spclContract.balanceOf(moreAddrs[0].address);
       expect(spclReceived.gt(0)).to.be.equal(true);
@@ -94,7 +94,7 @@ describe("Pool+Router", () => {
 
       // now any wallet with SPCT should have access to the market
       await expect(
-        router.connect(moreAddrs[0]).addLiquidity(parseEther("400"), 0, moreAddrs[0].address, {value: parseEther("100")})
+        router.connect(moreAddrs[0]).addLiquidity(parseEther("400"), moreAddrs[0].address, {value: parseEther("100")})
       ).to.be.revertedWith('insufficient_spct');
 
       let spclReceived = await spclContract.balanceOf(moreAddrs[0].address);
@@ -109,7 +109,7 @@ describe("Pool+Router", () => {
 
       // console.log(">> total supply spcl before", ethers.utils.formatEther( (await spclContract.totalSupply()).toString() ) )
       // now any wallet with SPCT should have access to the market
-      await router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), 0, moreAddrs[0].address, {value: parseEther("100")});
+      await router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), moreAddrs[0].address, {value: parseEther("100")});
 
       let spclReceived = await spclContract.balanceOf(moreAddrs[0].address);
       // console.log("<received> spcl vs <expected>:", formatEther(spclReceived.toString()), ("" + Math.sqrt((100*5) * 100)).slice(0,3))
@@ -126,7 +126,7 @@ describe("Pool+Router", () => {
       await openMarket();
 
       // now any wallet with SPCT should have access to the market
-      await router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), 0, moreAddrs[0].address, {value: parseEther("100")});
+      await router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), moreAddrs[0].address, {value: parseEther("100")});
 
       let spclReceived = await spclContract.balanceOf(moreAddrs[0].address);
       // console.log("<received> spcl vs <expected>:", formatEther(spclReceived.toString()), ("" + Math.sqrt((100*5) * 100)).slice(0,3));
@@ -240,7 +240,7 @@ describe("Pool+Router", () => {
       await openMarket();
 
       // now any wallet with SPCT should have access to the market
-      await router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), 0, moreAddrs[0].address, {value: parseEther("100")});
+      await router.connect(moreAddrs[0]).addLiquidity(parseEther("500"), moreAddrs[0].address, {value: parseEther("100")});
 
       let spclReceived = await spclContract.balanceOf(moreAddrs[0].address);
       // console.log("<received> spcl vs <expected>:", formatEther(spclReceived.toString()), ("" + Math.sqrt((100*5) * 100)).slice(0,3));
