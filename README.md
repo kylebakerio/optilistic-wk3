@@ -5,7 +5,7 @@ Lost half of project time to moving, traveling, working. Code is messy right now
 
 Planning to clean up / add front end tonight. 
 
-# deployed
+# deployed ICO front end, which will have LP/swap added to it later (this evening hopefully):
 https://spctoken.surge.sh
 tested with metamask connected to rinkeby.
 
