@@ -49,8 +49,8 @@ contract SPCL is ERC20 {
 		_mint(_who, amountToMint);
 	}
 
-	function burn(address _withdrawTo) public returns(uint spclToETH, uint spclToSPCT) {
-		uint toBurn = balanceOf(_withdrawTo);
+	function burn(uint _howMuchSPCL, address _withdrawTo) public returns(uint spclToETH, uint spclToSPCT) {
+		uint toBurn = _howMuchSPCL; // balanceOf(_withdrawTo);
 		uint contractETH = address(this).balance;
 		uint contractSPCT = spctContract.balanceOf(address(this));
 		uint totalSupply = totalSupply();

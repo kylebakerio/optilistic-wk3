@@ -121,7 +121,7 @@ describe("Pool+Router", () => {
       // console.log('spcl difference after 500/100 addition to pool', formatEther(spclBefore), formatEther(spclAfter), formatEther(spclAfter.sub(spclBefore)))
     });
 
-    it("Burns spcl back into spct and eth correctly (no swap fees)", async () => {
+    it("Burns spcl back into spct and eth correctly (no swap fees), both from router and from spcl directly, including fractional amounts and with minimums", async () => {
       await icoPurchase();
       await openMarket();
 
@@ -136,9 +136,30 @@ describe("Pool+Router", () => {
       const userSpctBefore = (await tothemoon.balanceOf(moreAddrs[0].address));
       // console.log('>>>spct before', formatEther(userSpctBefore).toString())
 
+      // done as three transactions to test ability to burn fractions of liquidity
+
       await expect(
-        await spclContract.connect(moreAddrs[0]).burn(moreAddrs[0].address)
-      ).to.changeEtherBalance(moreAddrs[0], parseEther("100"));
+        // await spclContract.connect(moreAddrs[0]).burn(spclReceived.div(2), moreAddrs[0].address)
+        await router.removeLiquidity(spclReceived.div(2), moreAddrs[0].address, 0, 0)
+      ).to.changeEtherBalance(moreAddrs[0], parseEther("50"));
+
+      await expect(
+        await spclContract.connect(moreAddrs[0]).burn(spclReceived.div(4), moreAddrs[0].address)
+        // await router.removeLiquidity(spclReceived, moreAddrs[0].address, 0, 0)
+      ).to.changeEtherBalance(moreAddrs[0], parseEther("25"));
+
+      await expect(
+        router.removeLiquidity(spclReceived.div(4), moreAddrs[0].address, parseEther("26"), 0)
+      ).to.be.revertedWith('min_eth_not_met')
+
+      await expect(
+        router.removeLiquidity(spclReceived.div(4), moreAddrs[0].address, 0, parseEther((25 * 5) + 1 + ""))
+      ).to.be.revertedWith('min_spct_not_met')
+
+      await expect(
+        await spclContract.connect(moreAddrs[0]).burn(spclReceived.div(4), moreAddrs[0].address)
+        // await router.removeLiquidity(spclReceived, moreAddrs[0].address, 0, 0)
+      ).to.changeEtherBalance(moreAddrs[0], parseEther("25"));
 
       const userSpctReturned = (await tothemoon.balanceOf(moreAddrs[0].address));
       // console.log('>>>spct returned', formatEther(userSpctReturned))
@@ -233,7 +254,8 @@ describe("Pool+Router", () => {
       let addr2SPCT = (await tothemoon.balanceOf(addr2.address))
 
       await expect(
-        await spclContract.connect(moreAddrs[0]).burn(moreAddrs[0].address)
+        // await spclContract.connect(moreAddrs[0]).burn(moreAddrs[0].address)
+        await router.removeLiquidity(spclReceived, moreAddrs[0].address, 0, 0)
       ).to.changeEtherBalance(moreAddrs[0], parseEther("101")); // 2 eth went into pool, and moreAddrs[0] owns 50% of pool
 
       const userSpctReturned = (await tothemoon.balanceOf(moreAddrs[0].address));
@@ -251,15 +273,11 @@ describe("Pool+Router", () => {
       // errors, and would likely be written just to match each other, which doesn't itself show
       // anything about correctness, and can only test consistency.
       expect(Math.round(Number(formatEther(userSpctReturned.sub(userSpctBefore))))).to.be.equal(495);
-
-      // how to get balance:
-      // const addr0Balance = await provider.getBalance(moreAddrs[0].address);
     });
 
 
     // tests to do:
       // use router instead of scpl for burning
-      // check fees collected by liquidity providers
       // minimums when removing liquidity
       // k is kept constant
   });

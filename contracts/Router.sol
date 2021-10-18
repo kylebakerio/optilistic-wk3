@@ -11,7 +11,7 @@ interface ISPCT is IERC20 {
 }
 interface ISPCL is IERC20 {
 	function addLiquidity(address, uint) external payable;
-	function burn(address _withdrawTo) external returns(uint eth, uint spct);
+	function burn(uint _howMuchSPCL, address _withdrawTo) external returns(uint eth, uint spct);
 	function swap(uint _spctToSwap, address recipient, bool _simulate) external payable returns(uint tokenInAfterFee, uint tokenOutAmount);
 }
 
@@ -66,8 +66,8 @@ contract Router is Ownable {
 	}
 
 	function removeLiquidity(uint _howMuchSPCL, address _withdrawTo, uint _minEth, uint _minSPCT) external returns(uint eth, uint spct) {
-		spclContract.transferFrom(msg.sender, SPCLaddress, _howMuchSPCL); // send liquidity to spcl
-		(eth, spct) = spclContract.burn(_withdrawTo); // burn it
+		// spclContract.transferFrom(msg.sender, SPCLaddress, _howMuchSPCL); // send liquidity to spcl
+		(eth, spct) = spclContract.burn(_howMuchSPCL, _withdrawTo); // burn it
 
 		require(eth >= _minEth, 'min_eth_not_met');
 		require(spct >= _minSPCT, 'min_spct_not_met');
