@@ -11,6 +11,9 @@
      top: 0; /* required for the stickiness */
      box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
    }
+   input {
+    max-width: 110px;
+   }
 </style>
 </head>
 <body class="container">
@@ -20,96 +23,290 @@
 </h1>
 
 <ul class="nav nav-tabs">
-  <li role="presentation" class="active"><a href="#">ICO</a></li>
-  <li role="presentation" ><a href="#">Yield Farm</a></li>
-  <li role="presentation" ><a href="#">Swap</a></li>
+  <li onclick="window.handleTabClick.bind(this)()" role="presentation" class="active"><a href="#">ICO</a></li>
+  <li onclick="window.handleTabClick.bind(this)()" role="presentation" ><a href="#">Liquidity</a></li>
+  <li onclick="window.handleTabClick.bind(this)()" role="presentation" ><a href="#">Swap</a></li>
 </ul>
- <br/><br/>
+<br/><br/>
+<div id="ICO">
+     <!-- onlyOwner buttons -->
+     <a href="#" style="display:none;" onclick="Phase()" class="owner-only btn btn-primary">Next Phase</a>
+     <a href="#" style="display:none;" onclick="Pause()" class="owner-only btn btn-primary">Pause SPCToken</a>
+     <a href="#" style="display:none;" onclick="Tax()" class="owner-only btn btn-primary">Toggle Tax</a>
+
+     <br/>
+     <br/>
  <!-- buy interface -->
  <input oninput="
     document.querySelector('#buy-button').innerHTML = `Buy ${document.querySelector('#buy-input').value} SPCToken`
     document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
- " type="number" id="buy-input" placeholder="spacetoken to buy"/>
+ " type="number" id="buy-input" placeholder="spct to buy"/>
  <a href="#" id="buy-button" onclick="Buy()" class="disabled btn btn-primary">Buy SPCToken</a>
  <p style="display:inline;" id="to-eth"> 1 ETH : 5 SPCT</p>
+     <br/>
+     <br/>
+     <div class="table-responsive">
+      <table class="table table-bordered">
+       <thead>
+        <tr>
+         <th>Your SPCToken</th>
+         <th id="user-balance">
+           <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/>
+         </th>
+        </tr>
+       </thead>
+       <tbody>
+        <tr>
+         <td>Total ETH Invested</td>
+         <td id="invested">       
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
+        <tr>
+         <td>Total SPCT Purchased</td>
+         <td id="all-spct">
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
+        <tr>
+         <td>Phase</td>
+         <td id="phase">       
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
+        <tr>
+         <td>Paused</td>
+         <td id="pause">       
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
+        <tr>
+         <td>Token Transaction Tax</td>
+         <td id="tax">       
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
+       </tbody>
+      </table>
+     </div>
 
- <!-- onlyOwner buttons -->
- <a href="#" style="display:none;" onclick="Phase()" class="owner-only btn btn-primary">Next Phase</a>
- <a href="#" style="display:none;" onclick="Pause()" class="owner-only btn btn-primary">Pause SPCToken</a>
- <a href="#" style="display:none;" onclick="Tax()" class="owner-only btn btn-primary">Toggle Tax</a>
- <br/>
- <br/>
- <div class="table-responsive">
-  <table class="table table-bordered">
-   <thead>
-    <tr>
-     <th>Your SPCToken</th>
-     <th id="user-balance">
-       <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/>
-     </th>
-    </tr>
-   </thead>
-   <tbody>
-    <tr>
-     <td>Total ETH Invested</td>
-     <td id="invested">       
-        <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
-    </tr>
-    <tr>
-     <td>Total SPCT Purchased</td>
-     <td id="all-spct">
-        <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
-    </tr>
-    <tr>
-     <td>Phase</td>
-     <td id="phase">       
-        <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
-    </tr>
-    <tr>
-     <td>Paused</td>
-     <td id="pause">       
-        <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
-    </tr>
-    <tr>
-     <td>Token Transaction Tax</td>
-     <td id="tax">       
-        <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
-    </tr>
-   </tbody>
-  </table>
- </div>
+     <h3 style="display:inline;">Purchases </h3><p id="blocknum" style="display:inline;">block:<img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></p>
+     <div style="max-height: 200px; y-overflow:scroll;" class="table-responsive">
+      <table class="table table-bordered">
+       <thead>
+        <tr>
+         <th>SPCT</th>
+         <th>ETH</th>
+         <th>ADDR</th>
+         <th>TIME</th>
+        </tr>
+       </thead>
+       <tbody id="transactions">
+       <!--  <tr>
+         <td>Total Eth Invested</td>
+         <td id="invested">?</td>
+        </tr>
+        <tr>
+         <td>Phase</td>
+         <td id="phase">?</td>
+        </tr>
+        <tr>
+         <td>Paused</td>
+         <td id="pause">?</td>
+        </tr>
+        <tr>
+         <td>Token Transaction Tax</td>
+         <td id="tax">?</td>
+        </tr> -->
+       </tbody>
+      </table>
+     </div>
+</div> <!--  CLOSE ICO  -->
 
- <h3 style="display:inline;">Purchases </h3><p id="blocknum" style="display:inline;">block:<img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></p>
- <div style="max-height: 200px; y-overflow:scroll;" class="table-responsive">
-  <table class="table table-bordered">
-   <thead>
-    <tr>
-     <th>SPCT</th>
-     <th>ETH</th>
-     <th>ADDR</th>
-     <th>TIME</th>
-    </tr>
-   </thead>
-   <tbody id="transactions">
-   <!--  <tr>
-     <td>Total Eth Invested</td>
-     <td id="invested">?</td>
-    </tr>
-    <tr>
-     <td>Phase</td>
-     <td id="phase">?</td>
-    </tr>
-    <tr>
-     <td>Paused</td>
-     <td id="pause">?</td>
-    </tr>
-    <tr>
-     <td>Token Transaction Tax</td>
-     <td id="tax">?</td>
-    </tr> -->
-   </tbody>
-  </table>
- </div>
+<div id="Liquidity" style="display:none;">
+     <!-- buy interface -->
+     <br/>
+     <div class="row">
+         <div class="col-md-6">
+             <div>
+             <label for="eth-spcl-input">eth to stake</label>
+             <input disabled name="eth-spcl-input" oninput="
+                document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
+                document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
+             " type="number" id="eth-spcl-input" placeholder="?"/>
+             </div>
+             <br>
+             <div>
+             <label for="spct-spcl-input">spct to stake</label>
+             <input name="spct-spcl-input" disabled oninput="
+                document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
+                document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
+             " type="number" id="spct-spcl-input" placeholder="?"/>
+             </div>
+             <br/>
+             <br/>
+             <a href="#" id="buy-spcl" onclick="Buy()" class="disabled btn btn-primary">Stake for SPCL</a>
+         </div>
+         <div class="col-md-6">
+            <div>
+            <p id="spcl-redeem-amounts">ETH: 0, SPCT: 0</p>
+            <label for="spcl-redeem-input">SPCL to redeem</label>
+            <input disabled name="spcl-redeem-input" oninput="
+               document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
+               document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
+            " type="number" id="spcl-redeem-input" placeholder="?"/>
+            </div>
+            <br>
+            <div>
+                <br>
+                <a href="#" id="buy-spcl" onclick="Buy()" class="disabled btn btn-primary">Redeem SPCL</a>
+            </div>
+         </div>
+     </div>
+
+     <br/>
+     <br/>
+     <div class="table-responsive">
+      <table class="table table-bordered">
+       <thead>
+        <tr>
+         <th>Your SPCL</th>
+         <th id="user-balance-SPCL">
+           <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/>
+         </th>
+        </tr>
+       </thead>
+       <tbody>
+        <tr>
+         <td>Your ETH pool entitlement</td>
+         <td id="spcl-eth-val">       
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
+        <tr>
+         <td>Your SPCT pool entitlement</td>
+         <td id="spcl-spct-val">
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
+        <tr>
+         <td>Percent of Pool</td>
+         <td id="spcl-pool-percent">       
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
+        <tr>
+         <td>Pool Size</td>
+         <td id="spcl-pool-total">       
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
+        <!-- <tr>
+         <td>Token Transaction Tax</td>
+         <td id="tax">       
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr> -->
+       </tbody>
+      </table>
+     </div>
+
+     <h3 style="display:inline;">Liquidity Pool Movements </h3><p id="blocknum" style="display:inline;">block:<img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></p>
+     <div style="max-height: 200px; y-overflow:scroll;" class="table-responsive">
+      <table class="table table-bordered">
+       <thead>
+        <tr>
+         <th>SPCT</th>
+         <th>ETH</th>
+         <th>ADDR</th>
+         <th>TIME</th>
+        </tr>
+       </thead>
+       <tbody id="spcl-transactions">
+            <!-- added dynamically -->
+       </tbody>
+      </table>
+     </div>
+</div> <!--  CLOSE Liquidity  -->
+
+<div id="Swap" style="display:none;">
+        <!-- <div class="input-group">
+          <div class="input-group-btn">
+            <button type="button" class="btn btn-default">Action</button>
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <span class="caret"></span>
+              <span class="sr-only">Toggle Dropdown</span>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a href="#">Action</a></li>
+              <li><a href="#">Another action</a></li>
+              <li><a href="#">Something else here</a></li>
+              <li role="separator" class="divider"></li>
+              <li><a href="#">Separated link</a></li>
+            </ul>
+          </div>
+          <input type="text" class="form-control" aria-label="Text input with segmented button dropdown">
+       </div> -->  
+
+     <!-- buy interface -->
+     <a href="#" id="buy-button" onclick="Buy()" class="disabled btn btn-primary">ETH  -> SPCT</a>
+     <a href="#" id="buy-button" onclick="Buy()" class="disabled btn btn-primary">SPCT -> ETH</a>
+     <br/>
+     <br/>
+     <input oninput="
+        document.querySelector('#buy-button').innerHTML = `Buy ${document.querySelector('#buy-input').value} SPCToken`
+        document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
+     " type="number" id="buy-input" placeholder="1 ETH"/>
+     <p style="display:inline;" id="to-eth"> for 5 SPCT</p>
+     <br/>
+     <br/>
+     <a style="display:inline;" href="#" id="buy-button" onclick="Buy()" class="disabled btn btn-primary">Swap</a>
+
+     <br/>
+     <br/>
+     <div class="table-responsive">
+      <table class="table table-bordered">
+       <thead>
+        <tr>
+         <th>Your SPCToken</th>
+         <th id="user-balance">
+           <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/>
+         </th>
+        </tr>
+       </thead>
+       <tbody>
+        <tr>
+         <td>Your ETH</td>
+         <td id="invested">       
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
+       </tbody>
+      </table>
+     </div>
+
+     <h3 style="display:inline;">Swaps </h3><p id="blocknum" style="display:inline;">block:<img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></p>
+     <div style="max-height: 200px; y-overflow:scroll;" class="table-responsive">
+      <table class="table table-bordered">
+       <thead>
+        <tr>
+         <th>IN</th>
+         <th>OUT</th>
+         <th>ADDRESS</th>
+         <th>TIME</th>
+        </tr>
+       </thead>
+       <tbody id="transactions">
+       <!--  <tr>
+         <td>Total Eth Invested</td>
+         <td id="invested">?</td>
+        </tr>
+        <tr>
+         <td>Phase</td>
+         <td id="phase">?</td>
+        </tr>
+        <tr>
+         <td>Paused</td>
+         <td id="pause">?</td>
+        </tr>
+        <tr>
+         <td>Token Transaction Tax</td>
+         <td id="tax">?</td>
+        </tr> -->
+       </tbody>
+      </table>
+     </div>
+</div> <!--  CLOSE Swap  -->
+
 </body>
         <!-- src="https://cdn.ethers.io/scripts/ethers-v4.min.js" -->
 
@@ -120,4 +317,16 @@
 <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js"></script>
 <script src="./abi.js"></script>
 <script src="./index.js"></script>
+<script>
+    window.handleTabClick = function(el) {
+      console.log(this, el)
+      document.querySelector('.nav-tabs').querySelector('.active').classList.remove('active')
+      this.classList.add('active')
+      const tabName = document.getElementById(this.innerText);
+      ['ICO','Liquidity','Swap'].forEach(name => {
+        document.getElementById(name).style.display = "none";
+      })
+      document.getElementById(this.innerText).style.display = 'unset'
+    }
+</script>
 </html>
