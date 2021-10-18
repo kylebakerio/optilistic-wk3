@@ -1,4 +1,11 @@
-# deployed
+# excuses
+
+oct 18 2021:
+Lost half of project time to moving, traveling, working. Code is messy right now. Front end portion is not added. Tests are passing, requirements are met (including optional requirement for slippage check), but just barely.
+
+Planning to clean up / add front end tonight. 
+
+# deployed ICO front end, which will have LP/swap added to it later (this evening hopefully):
 https://spctoken.surge.sh
 tested with metamask connected to rinkeby.
 
