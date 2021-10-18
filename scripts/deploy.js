@@ -12,10 +12,10 @@ async function main() {
   const preDeployBalance = (await deployer.getBalance()).toString();
   console.log("Account balance before:", preDeployBalance);
 
-  const SPCToken = await ethers.getContractFactory("SPCToken");
-  const spctoken = await SPCToken.deploy(treasuryAddr);
-
-  console.log("SPCToken address:", spctoken.address);
+  // probably don't need to be deploying this separately, actually.
+  // const SPCToken = await ethers.getContractFactory("SPCToken");
+  // const spctoken = await SPCToken.deploy(treasuryAddr);
+  // console.log("SPCToken address:", spctoken.address);
 
   const whitelist = [gabsPubKey, myPubKey1, myPubKey2];
   const ToTheMoon = await ethers.getContractFactory("ToTheMoon");
@@ -24,9 +24,10 @@ async function main() {
   console.log("ToTheMoon address:", tothemoon.address);
   console.log("Whitelisted contributors:", whitelist);
 
-  const postDeployBalance = (await deployer.getBalance()).toString();
-  console.log("Account balance after:", postDeployBalance);
-  console.log("Cost:",preDeployBalance - postDeployBalance);
+  // this doesn't work, probably because we're not waiting for the next block...? maybe?
+  // const postDeployBalance = (await deployer.getBalance()).toString();
+  // console.log("Account balance after:", postDeployBalance);
+  // console.log("Cost:",preDeplaoyBalance - postDeployBalance);
 }
 
 main()

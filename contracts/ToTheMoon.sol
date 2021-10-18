@@ -5,9 +5,15 @@ import "hardhat/console.sol";
 
 import "./SPCToken.sol";
 
-// handles the ICO
+interface IRouter {
+    function getSPCTtoETH10000000() external view returns(uint);
+    function addLiquidity(uint amountSPCT, uint maxSlippage, address spclReceiver) external payable;
+    function haveLiquidity() external view returns(bool);
+}
+
 contract ToTheMoon is SPCToken {
     uint public fundraiseTotal;
+    IRouter public router;
 
     enum Phases {
         Seed,
@@ -23,11 +29,17 @@ contract ToTheMoon is SPCToken {
     event Phase(uint8 phase);
     event Pause(bool paused);
 
-    constructor(address[] memory _whitelist, address _treasury) SPCToken(_treasury) {
-        treasury = _treasury;
+    constructor(address[] memory _whitelist) SPCToken() {
+        treasury = owner();
         for (uint i = 0; i < _whitelist.length; i++) {
             whitelist[_whitelist[i]] = true;
         }
+    }
+
+    function setRouter(address _liqudityPool, address _router) external onlyOwner {
+        spclAddress = _liqudityPool;
+        routerAddress = _router;
+        router = IRouter(_router);
     }
 
     function progressPhase() external onlyOwner {
@@ -52,12 +64,31 @@ contract ToTheMoon is SPCToken {
         // require(sent, "Failed to send Ether");
         fundraiseTotal += msg.value;
         contributions[msg.sender] += msg.value;
-        ERC20._transfer(minter, msg.sender, msg.value * 5); // 5:1 initial mint value
+        ERC20._transfer(owner(), msg.sender, msg.value * 5); // 5:1 initial mint value
         emit Buy(msg.sender, msg.value);
     }
 
+    // spec:
+    // Add a withdraw function to your ICO contract that allows you to moves the invested funds to your liquidity contract. 
+    // How exactly you do this is up to you; just make sure it's possible to deposit an even worth of each asset.
+    function withdraw() external onlyOwner {
+        require(address(this).balance > 0, "no_eth");
+        uint ethBalance = address(this).balance;
+
+        if (router.haveLiquidity()) {
+            console.log("before call");
+            uint spctPrice = router.getSPCTtoETH10000000() / 10000000;
+            console.log("has liquidity, adding more liquidity, price is", spctPrice);
+            router.addLiquidity{value: address(this).balance}(spctPrice * address(this).balance, 0, treasury);
+        }
+        else {
+            console.log("no liquidity, initial liquidity add event");
+            router.addLiquidity{value: address(this).balance}(5 * address(this).balance, 0, treasury);
+        }
+    }
+
     function _beforeTokenTransfer(address from, address to, uint256 amount)  internal virtual override {
-        require(from == minter || to == minter || phase == Phases.Open, "transfers_forbidden");
+        require(from == owner() || to == owner() || phase == Phases.Open, "transfers_forbidden");
         // to == minter | initial mint allowed
         // from == minter | transfering minted tokens to investors allowed
         super._beforeTokenTransfer(from, to, amount);

@@ -13,6 +13,16 @@ describe("ToTheMoon", () => {
 
     const ToTheMoon = await ethers.getContractFactory("ToTheMoon");
     tothemoon = await ToTheMoon.deploy(whitelistAddrs.map(a => a.address), treasury.address); // , parseEther("1.5")
+
+    // required that we specify this when deploying ToTheMoon, because required by SPCToken
+    const SPCL = await ethers.getContractFactory("SPCL");
+    spclContract = await SPCL.deploy(tothemoon.address);
+
+    // required that we specify this when deploying ToTheMoon, because required by SPCToken
+    const Router = await ethers.getContractFactory("Router");
+    router = await Router.deploy(tothemoon.address, spclContract.address);
+
+    await tothemoon.setRouter(spclContract.address, router.address);    
   });
 
   describe("Spec", () => {
