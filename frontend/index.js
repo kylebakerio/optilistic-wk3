@@ -94,9 +94,12 @@ async function spclSetup() {
     let spclEthBal = (await provider.getBalance(spclContract.address))
     let spclSpctBal = (await spctContract.balanceOf(spclContract.address))
 
+    
+
+
     document.querySelector('#spcl-val-one').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : `${(1 / window.SPC.spclTotalSupply) * spclEthBal} ETH + ${(1 / window.SPC.spclTotalSupply) * spclSpctBal} SPCT`;  
     document.querySelector('#spcl-balance').innerHTML = poolPercent <= 0 ? "-" : ethers.utils.formatEther(window.SPC.userSPCL);
-    document.querySelector('#spcl-pool-total').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : ethers.utils.formatEther(window.SPC.spclTotalSupply) + "SPCL";
+    document.querySelector('#spcl-pool-total').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : ethers.utils.formatEther(window.SPC.spclTotalSupply) + " SPCL";
     
     const showPercent = window.SPC.spclTotalSupply > 0 && poolPercent > 0; 
     document.querySelector('#spcl-pool-percent').innerHTML = !showPercent ? "-" : `${poolPercent * 100}%`;
@@ -105,6 +108,8 @@ async function spclSetup() {
 
     document.querySelector('#spcl-eth-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther( (spclEthBal * poolPercent) + "" )} ETH`;
     document.querySelector('#spcl-spct-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther( (spclSpctBal * poolPercent) + "" )} SPCT`;
+
+    swapTableData();
   }
   liquidityTableData();
 
@@ -116,10 +121,12 @@ async function spclSetup() {
     let spclEthBal = (await provider.getBalance(spclContract.address))
     let spclSpctBal = (await spctContract.balanceOf(spclContract.address))
 
+    document.querySelector('#swap-pool-all').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : `${(1 / window.SPC.spclTotalSupply) * spclEthBal} ETH + ${(1 / window.SPC.spclTotalSupply) * spclSpctBal} SPCT`
     document.querySelector('#swap-user-spct').innerHTML = ethers.utils.formatEther(window.SPC.userSPCT)
     document.querySelector('#swap-user-eth').innerHTML = ethers.utils.formatEther((await provider.getBalance(userAddress)))
+
   }
-  swapTableData();
+  
 
   if (window.SPC.spclTotalSupply) {
     enableOn('on-liquidity')
@@ -187,9 +194,49 @@ const logs = await spctContract.queryFilter(filter, 0);
         time: new Date((await log.getBlock()).timestamp*1000),
       })
     }
-
-
   });
+
+
+
+
+  const swapEthFilter = spclContract.filters.SwapEth(null, null);
+  // Query the swapEthFilter (the latest could be omitted)
+  const swapEthLogs = await spclContract.queryFilter(swapEthFilter, 0);
+
+  const swapSpctFilter = spclContract.filters.SwapSpct(null, null);
+  // Query the swapSpctFilter (the latest could be omitted)
+  const swapSpctLogs = await spclContract.queryFilter(swapSpctFilter, 0);
+
+  // attempt to time sort them (untested)
+  const swapLogs = swapEthLogs.concat(swapSpctLogs).sort(async (a,b) => {
+    return (await a.getBlock()).timestamp - (await a.getBlock()).timestamp
+  })
+
+  console.warn("swap logs:", swapLogs)
+
+  // Print out all the values:
+  swapLogs.forEach(async (log) => {
+    // The log object contains lots of useful things, but the args are what you prolly want)
+    console.log('time', new Date((await log.getBlock()).timestamp*1000) ); 
+    console.log('args', log.args);
+    // console.log('full tx event log',log)
+
+    // {
+    //   spct: ethers.utils.formatEther(ethers.BigNumber.from(log.args.eth).mul(5)),
+    //   eth: ethers.utils.formatEther(log.args.eth),
+    //   sender: log.args.sender,
+    // }
+
+    // if (log.event === "SwapEth") {
+      // liquidityProvider, ethIn, spctIn, spclOut
+      addEventRow('swap-events', {
+        address: log.args[0],
+        in: ethers.utils.formatEther(log.args[1]) + (log.event === "SwapEth" ? " ETH" : " SPCT"), 
+        out: ethers.utils.formatEther(log.args[2]) + (log.event === "SwapEth" ? " SPCT" : " ETH"), 
+        time: new Date((await log.getBlock()).timestamp*1000),
+      })
+  });
+
 
 
 
@@ -206,7 +253,7 @@ const logs = await spctContract.queryFilter(filter, 0);
 
   spclContract.on("Mint", async (liquidityProvider, ethIn, spctIn, spclOut, event) => {
     console.log("EVENT: Mint", liquidityProvider, ethIn, spctIn, spclOut);
-    if (!marketOpen) {
+    if (!marketOpen   ) {
       marketOpen = true;
       enableOn('on-market-open');
       trackEthSpctRate()
@@ -219,16 +266,11 @@ const logs = await spctContract.queryFilter(filter, 0);
       spclOut: "+" + ethers.utils.formatEther(spclOut),
       time: new Date((await event.getBlock()).timestamp * 1000),
     })
-    // document.querySelector('#pause').innerHTML = paused ? "Yes" : "No";
-    // if (paused) {
-    //   document.querySelector('#buy-button').classList.add('disabled')
-    // } else {
-    //   document.querySelector('#buy-button').classList.remove('disabled')
-    // }
+    liquidityTableData()
   })
   spclContract.on("Burn", async (liquidityProvider, spclIn, ethOut, spctOut, event) => {
     console.log("EVENT: Burn", liquidityProvider, spclIn, ethOut, spctOut);
-
+    
     addEventRow('liquidity-events', {
       liquidityProvider, 
       ethOut: "+" + ethers.utils.formatEther(ethOut), 
@@ -236,44 +278,29 @@ const logs = await spctContract.queryFilter(filter, 0);
       spclIn: "-" + ethers.utils.formatEther(spclIn), 
       time: new Date((await event.getBlock()).timestamp*1000),
     })
-    // document.querySelector('#pause').innerHTML = paused ? "Yes" : "No";
-    // if (paused) {
-    //   document.querySelector('#buy-button').classList.add('disabled')
-    // } else {
-    //   document.querySelector('#buy-button').classList.remove('disabled')
-    // }
+    liquidityTableData()
   }) 
   spclContract.on("SwapEth", async (swapper, ethIn, spctOut, event) => {
     console.log("EVENT: SwapEth", swapper, ethIn, spctOut);
-
+    
     addEventRow('swap-events', {
       swapper: ethers.utils.formatEther(swapper), 
       ethIn: ethers.utils.formatEther(ethIn) + " ETH", 
       spctOut: ethers.utils.formatEther(spctOut) + " SPCT",
       time: new Date((await event.getBlock()).timestamp*1000),
     })
-    // document.querySelector('#pause').innerHTML = paused ? "Yes" : "No";
-    // if (paused) {
-    //   document.querySelector('#buy-button').classList.add('disabled')
-    // } else {
-    //   document.querySelector('#buy-button').classList.remove('disabled')
-    // }
+    liquidityTableData()
   }) 
   spclContract.on("SwapSpct", async (swapper, spctIn, ethOut, event) => {
     console.log("EVENT: SwapSpct", swapper, spctIn, ethOut);
-
+    
     addEventRow('swap-events', {
       swapper: ethers.utils.formatEther(swapper), 
       spctIn: ethers.utils.formatEther(spctIn) + " SPCT", 
       ethOut: ethers.utils.formatEther(ethOut)+ " ETH",
       time: new Date((await event.getBlock()).timestamp*1000),
     })
-    // document.querySelector('#pause').innerHTML = paused ? "Yes" : "No";
-    // if (paused) {
-    //   document.querySelector('#buy-button').classList.add('disabled')
-    // } else {
-    //   document.querySelector('#buy-button').classList.remove('disabled')
-    // }
+    liquidityTableData()
   })
 
   window.SPC.addLiquidity = async function() {
