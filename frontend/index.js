@@ -254,11 +254,11 @@ const logs = await spctContract.queryFilter(filter, 0);
     let lastBlock = window.currentBlock;
     window.currentEthToSpct = async function() {
       if (window.currentBlock !== lastBlock) {
-        lastRate = (await routerContract.getETHtoSPCT10000000(0)).toNumber() / 10000000
+        window.SPC.lastRate = (await routerContract.getETHtoSPCT10000000(0)).toNumber() / 10000000
       }
-      return lastRate
+      return window.SPC.lastRate
     }
-    let lastRate = (await routerContract.getETHtoSPCT10000000(0)).toNumber() / 10000000;
+    window.SPC.lastRate = (await routerContract.getETHtoSPCT10000000(0)).toNumber() / 10000000;
   }
 
   spclContract.on("Mint", async (liquidityProvider, ethIn, spctIn, spclOut, event) => {

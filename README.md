@@ -29,7 +29,22 @@ to run local server, go into `frontend` folder and run:
 to deploy front end, go into `frontend` folder and run
 `surge`
 
-# Basic Sample Hardhat Project
+# to create a fresh iteration of the front end
+- check deploy script, set your own whitelist 
+- make sure your hardhat.config.js is setup right with your own private key; 
+	- I do this using .env file:
+	- so, add in your own alchemy and rinkeby private key in a .env, or do it your own way
+	- .env file should be at same folder depth as hardhat.config.js, and should look like this:
+```
+RINKEBY_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ALCHEMY_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+run deploy script for rinkeby:
+`npx hardhat run scripts/deploy.js --network rinkeby`
+
+
+## based off of a....
+### Basic Sample Hardhat Project
 This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts.
 
 Try running some of the following tasks:
