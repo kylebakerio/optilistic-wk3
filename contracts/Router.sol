@@ -34,17 +34,17 @@ contract Router is Ownable {
 	}
 
 	// only payable so we can look at msg.value and deduct it when evaluating price
-	function getSPCTtoETH10000000() public payable returns(uint scaledPrice) {
+	function getSPCTtoETH10000000(uint _msgVal) public view returns(uint scaledPrice) {
 		require(haveLiquidity(), "no_liquidity");
-		scaledPrice = (spctContract.balanceOf(SPCLaddress) * 10000000) / (SPCLaddress.balance - msg.value);
+		scaledPrice = (spctContract.balanceOf(SPCLaddress) * 10000000) / (SPCLaddress.balance - _msgVal);
 		// console.log("<scaled price> <spctbalance> <ethbalance>", scaledPrice, spctContract.balanceOf(SPCLaddress)/1 ether, (SPCLaddress.balance - msg.value)/1 ether);
 		return scaledPrice;
 	}
 
 		// only payable so we can look at msg.value and deduct it when evaluating price
-	function getETHtoSPCT10000000() public payable returns(uint scaledPrice) {
+	function getETHtoSPCT10000000(uint _msgVal) public view returns(uint scaledPrice) {
 		require(haveLiquidity(), "no_liquidity");
-		scaledPrice = ((SPCLaddress.balance - msg.value)  * 10000000) / (spctContract.balanceOf(SPCLaddress));
+		scaledPrice = ((SPCLaddress.balance - _msgVal)  * 10000000) / (spctContract.balanceOf(SPCLaddress));
 		// console.log("<scaled price> <spctbalance> <ethbalance>", scaledPrice, spctContract.balanceOf(SPCLaddress)/1 ether, (SPCLaddress.balance - msg.value)/1 ether);
 		return scaledPrice;
 	}
@@ -76,11 +76,11 @@ contract Router is Ownable {
 			require(increasedAllowance, "allowance_fail");
 			// console.log('~~~spct val will be <rate>',getSPCTtoETH10000000());
 			// conversionRate = getSPCTtoETH10000000();
-			conversionRate = getETHtoSPCT10000000();
+			conversionRate = getETHtoSPCT10000000(msg.value);
 		} else {
 			// eth -> spct
 			// console.log('~~~eth val will be <rate>', getETHtoSPCT10000000());
-			conversionRate = getSPCTtoETH10000000();
+			conversionRate = getSPCTtoETH10000000(msg.value);
 		}
 		(uint tokenInAfterFee, uint tokenOutAmount) = spclContract.swap{value: msg.value}(_spctToSwap, msg.sender, _simulate);
 

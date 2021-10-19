@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
 import "./SPCToken.sol";
 
 interface IRouter {
-    function getSPCTtoETH10000000() external view returns(uint);
+    function getSPCTtoETH10000000(uint) external view returns(uint);
     function addLiquidity(uint amountSPCT, address spclReceiver) external payable;
     function haveLiquidity() external view returns(bool);
 }
@@ -76,7 +76,7 @@ contract ToTheMoon is SPCToken {
 
         if (router.haveLiquidity()) {
             // console.log("before call");
-            uint spctPrice = router.getSPCTtoETH10000000() / 10000000;
+            uint spctPrice = router.getSPCTtoETH10000000(0) / 10000000;
             // console.log("has liquidity, adding more liquidity, price is", spctPrice);
             router.addLiquidity{value: ethBalance}(spctPrice * ethBalance, treasury);
         }
@@ -94,7 +94,7 @@ contract ToTheMoon is SPCToken {
 
         // uncomment block if desire to force liquidity deposits when possible
         // uint ethBalance = address(this).balance;
-        // uint spctPrice = router.getSPCTtoETH10000000() / 10000000;
+        // uint spctPrice = router.getSPCTtoETH10000000(0) / 10000000;
         // require(spctPrice * ethBalance > balanceOf(owner()),"can_deposit_liquidity");
         
         (bool sent, ) = payable(treasury).call{value: address(this).balance}(""); // this is moved for wk3 to be in withdraw() 

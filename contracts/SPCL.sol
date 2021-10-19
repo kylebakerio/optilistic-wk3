@@ -15,8 +15,8 @@ contract SPCL is ERC20, Ownable {
 	address public SPCTaddress;
 	bool public marketOpen = false;
 
-	event Mint(address liquidityProvider, uint liquidityTokens);
-	event Burn(address liquidityProvider, uint ethReturned, uint spctReturned);
+	event Mint(address liquidityProvider, uint ethIn, uint spctIn, uint spclOut);
+	event Burn(address liquidityProvider, uint spclIn, uint ethOut, uint spctOut);
 	event SwapEth(address swapper, uint ethIn, uint spctOut);
 	event SwapSpct(address swapper, uint spctIn, uint ethOut);
 
@@ -60,7 +60,7 @@ contract SPCL is ERC20, Ownable {
 		uint amountToMint = Babylonian.sqrt(spctLiquidityAdded * msg.value);
 		// console.log("minting <spcl> <to>:", amountToMint, amountToMint / 1 ether, _who);
 		_mint(_who, amountToMint);
-		emit Mint(_who, amountToMint);
+		emit Mint(_who, msg.value, spctLiquidityAdded, amountToMint);
 	}
 
 	function burn(uint _howMuchSPCL, address _withdrawTo) public lock returns(uint spclToETH, uint spclToSPCT) {
@@ -77,7 +77,7 @@ contract SPCL is ERC20, Ownable {
 		spctContract.transfer(_withdrawTo, spclToSPCT);
 		(bool sent, ) = _withdrawTo.call{value: spclToETH}("");
         require(sent, "sending_eth_failed");
-        emit Burn(_withdrawTo, spclToETH, spclToSPCT);
+        emit Burn(_withdrawTo, _howMuchSPCL, spclToETH, spclToSPCT);
 	}
 
 	// lifted close to directly from https://github.com/Uniswap/v2-periphery/blob/master/contracts/libraries/UniswapV2Library.sol#L35

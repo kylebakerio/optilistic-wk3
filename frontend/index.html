@@ -33,7 +33,7 @@
     <a href="#" style="display:none;" onclick="Phase()" class="owner-only btn btn-primary">Next Phase</a>
     <a href="#" style="display:none;" onclick="Pause()" class="owner-only btn btn-primary">Pause SPCToken</a>
     <a href="#" style="display:none;" onclick="Tax()" class="owner-only btn btn-primary">Toggle Tax</a>
-    <a href="#" style="display:none;" onclick="Withdraw.bind(this)()" class="disabled owner-only btn btn-primary">Withdraw To SPCL</a>
+    <a href="#" style="display:none;" onclick="Withdraw.bind(this)()" class="on-open-phase disabled owner-only btn btn-primary">Withdraw To SPCL</a>
     <br/>
     <br/>
      <!-- buy interface -->
@@ -85,7 +85,7 @@
       </table>
      </div>
 
-     <h3 style="display:inline;">Purchases </h3><p id="blocknum" style="display:inline;">block:<img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></p>
+     <h3 style="display:inline;">Purchases </h3><p class="blocknum" style="display:inline;">block:<img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></p>
      <div style="max-height: 200px; y-overflow:scroll;" class="table-responsive">
       <table class="table table-bordered">
        <thead>
@@ -125,42 +125,40 @@
          <div class="col-md-6">
              <div>
              <label for="eth-spcl-input">eth to stake</label>
-             <input disabled name="eth-spcl-input" oninput="
-                document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
-                document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
-             " type="number" id="eth-spcl-input" placeholder="?"/>
+             <input name="eth-spcl-input" oninput="
+                document.querySelector('#spct-spcl-input').value = this.value * window.currentEthToSpct()
+             " type="number" id="eth-spcl-input" placeholder="0"/>
              </div>
              <br>
              <div>
              <label for="spct-spcl-input">spct to stake</label>
-             <input name="spct-spcl-input" disabled oninput="
-                document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
-                document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
-             " type="number" id="spct-spcl-input" placeholder="?"/>
+             <input name="spct-spcl-input" oninput="
+                document.querySelector('#eth-spcl-input').value = window.currentEthToSpct() / this.value
+             " type="number" id="spct-spcl-input" placeholder="0"/>
              </div>
              <br/>
              <br/>
-             <a href="#" id="buy-spcl" onclick="Buy()" class="disabled btn btn-primary">Stake for SPCL</a>
+             <a href="#" id="buy-spcl" onclick="window.SPC.addLiquidity()" class="btn btn-primary">Stake for SPCL</a>
          </div>
          <div class="col-md-6">
             <div>
             <p id="spcl-redeem-amounts">ETH: 0, SPCT: 0</p>
             <label for="spcl-redeem-input">SPCL to redeem</label>
-            <input disabled name="spcl-redeem-input" oninput="
+            <input class="on-have-spcl" disabled name="spcl-redeem-input" oninput="
                document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
                document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
             " type="number" id="spcl-redeem-input" placeholder="0"/>
             </div>
             <div>
             <label for="spcl-redeem-input">min eth</label>
-            <input disabled name="spcl-redeem-input" oninput="
+            <input class="on-have-spcl" disabled name="spcl-redeem-input" oninput="
                document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
                document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
             " type="number" id="spcl-redeem-input" placeholder="0"/>
             </div>
             <div>
             <label for="spcl-redeem-input">min spct</label>
-            <input disabled name="spcl-redeem-input" oninput="
+            <input class="on-have-spcl" disabled name="spcl-redeem-input" oninput="
                document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
                document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
             " type="number" id="spcl-redeem-input" placeholder="0"/>
@@ -168,7 +166,7 @@
             <br>
             <div>
                 <br>
-                <a href="#" id="buy-spcl" onclick="Buy()" class="disabled btn btn-primary">Redeem SPCL</a>
+                <a href="#" id="buy-spcl" onclick="Buy()" class="on-have-spcl disabled btn btn-primary">Redeem SPCL</a>
             </div>
          </div>
      </div>
@@ -179,7 +177,7 @@
       <table class="table table-bordered">
        <thead>
         <tr>
-         <th>Your SPCL</th>
+         <th>Value of 1 SPCL</th>
          <th id="user-balance-SPCL">
            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/>
          </th>
@@ -187,6 +185,16 @@
        </thead>
        <tbody>
         <tr>
+        <tr>
+         <td>Your SPCL</td>
+         <td id="spcl-pool-total">       
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
+        <tr>
+         <td>Pool Size</td>
+         <td id="spcl-pool-total">       
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
          <td>Your ETH pool entitlement</td>
          <td id="spcl-eth-val">       
             <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
@@ -197,18 +205,8 @@
             <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
         </tr>
         <tr>
-         <td>Percent of Pool</td>
+         <td>Your Percent of Pool</td>
          <td id="spcl-pool-percent">       
-            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
-        </tr>
-        <tr>
-         <td>Pool Size</td>
-         <td id="spcl-pool-total">       
-            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
-        </tr>
-        <tr>
-         <td>Value of 1 SPCL</td>
-         <td id="spcl-pool-total">       
             <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
         </tr>
         <!-- <tr>
@@ -220,18 +218,18 @@
       </table>
      </div>
 
-     <h3 style="display:inline;">Liquidity Pool Movements </h3><p id="blocknum" style="display:inline;">block:<img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></p>
+     <h3 style="display:inline;">Liquidity Pool Movements </h3><p class="blocknum" style="display:inline;">block:<img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></p>
      <div style="max-height: 200px; y-overflow:scroll;" class="table-responsive">
       <table class="table table-bordered">
        <thead>
         <tr>
-         <th>SPCT</th>
-         <th>ETH</th>
          <th>ADDR</th>
-         <th>TIME</th>
+         <th>ETH IN</th>
+         <th>SPCT IN</th>
+         <th>SPCL OUT</th>
         </tr>
        </thead>
-       <tbody id="spcl-transactions">
+       <tbody id="liquidity-events">
             <!-- added dynamically -->
        </tbody>
       </table>
@@ -258,13 +256,13 @@
        </div> -->  
 
      <!-- buy interface -->
-     <a href="#" id="buy-button" onclick="Buy()" class="disabled btn btn-primary">ETH  -> SPCT</a>
-     <a href="#" id="buy-button" onclick="Buy()" class="disabled btn btn-primary">SPCT -> ETH</a>
+     <a href="#" id="buy-button" onclick="Buy()" class="btn btn-primary active">ETH  -> SPCT</a>
+     <a href="#" id="buy-button" onclick="Buy()" class="btn btn-primary">SPCT -> ETH</a>
      <br/>
      <br/>
      <div>
      <label for="spcl-redeem-input">Swap ETH</label>
-     <input disabled oninput="
+     <input oninput="
         document.querySelector('#buy-button').innerHTML = `Buy ${document.querySelector('#buy-input').value} SPCToken`
         document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
      " type="number" id="buy-input" placeholder="0"
@@ -274,7 +272,7 @@
      <br/>
      <div>
      <label for="spcl-redeem-input">Max Slip:</label>
-     <input disabled name="spcl-redeem-input" oninput="
+     <input name="spcl-redeem-input" step="0.01" min="0.01" max="100" oninput="
         document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
         document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
      " type="number" id="spcl-redeem-input" value="10"/>
@@ -282,7 +280,7 @@
      </div>
      <br/>
      <br/>
-     <a style="display:inline;" href="#" id="buy-button" onclick="Buy()" class="disabled btn btn-primary">Swap</a>
+     <a style="display:inline;" href="#" id="buy-button" onclick="Buy()" class="btn btn-primary">Swap</a>
 
      <br/>
      <br/>
@@ -306,18 +304,17 @@
       </table>
      </div>
 
-     <h3 style="display:inline;">Swaps </h3><p id="blocknum" style="display:inline;">block:<img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></p>
+     <h3 style="display:inline;">Swaps </h3><p class="blocknum" style="display:inline;">block:<img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></p>
      <div style="max-height: 200px; y-overflow:scroll;" class="table-responsive">
       <table class="table table-bordered">
        <thead>
         <tr>
+         <th>ADDRESS</th>
          <th>IN</th>
          <th>OUT</th>
-         <th>ADDRESS</th>
-         <th>TIME</th>
         </tr>
        </thead>
-       <tbody id="transactions">
+       <tbody id="swap-events">
        <!--  <tr>
          <td>Total Eth Invested</td>
          <td id="invested">?</td>
