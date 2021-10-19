@@ -86,7 +86,13 @@ routerAbi = JSON.parse(
       "type": "function"
     },
     {
-      "inputs": [],
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_msgVal",
+          "type": "uint256"
+        }
+      ],
       "name": "getETHtoSPCT10000000",
       "outputs": [
         {
@@ -95,11 +101,17 @@ routerAbi = JSON.parse(
           "type": "uint256"
         }
       ],
-      "stateMutability": "payable",
+      "stateMutability": "view",
       "type": "function"
     },
     {
-      "inputs": [],
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_msgVal",
+          "type": "uint256"
+        }
+      ],
       "name": "getSPCTtoETH10000000",
       "outputs": [
         {
@@ -108,7 +120,7 @@ routerAbi = JSON.parse(
           "type": "uint256"
         }
       ],
-      "stateMutability": "payable",
+      "stateMutability": "view",
       "type": "function"
     },
     {

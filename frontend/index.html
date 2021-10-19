@@ -126,14 +126,18 @@
              <div>
              <label for="eth-spcl-input">eth to stake</label>
              <input name="eth-spcl-input" oninput="
-                document.querySelector('#spct-spcl-input').value = this.value * window.currentEthToSpct()
+                (async () => {
+                    document.querySelector('#spct-spcl-input').value =  (1/(await window.currentEthToSpct())) * this.value
+                })()
              " type="number" id="eth-spcl-input" placeholder="0"/>
              </div>
              <br>
              <div>
              <label for="spct-spcl-input">spct to stake</label>
              <input name="spct-spcl-input" oninput="
-                document.querySelector('#eth-spcl-input').value = window.currentEthToSpct() / this.value
+                (async () => {
+                    document.querySelector('#eth-spcl-input').value = this.value * (await window.currentEthToSpct())
+                })()
              " type="number" id="spct-spcl-input" placeholder="0"/>
              </div>
              <br/>

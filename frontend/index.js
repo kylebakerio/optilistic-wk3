@@ -10,13 +10,19 @@ window.SPC = {}
 // wk2: 
 // const spctContract = new ethers.Contract('0xC2CA5E96069d1678B62704F9791cdaE798dE1C4A', abi, signer)
 
+
+// ToTheMoon address: 0x177111A80772e550238C1140019D4FfC2141A9f3
+// spcl address: 0x84323ec80907bae060a76c40F4B18C7EAeaD92A5
+// router address: 0x49b86b01169098910463728CfC66dB9bc88591F5
+
+
 // wk3:
 // ToTheMoon address: 0x84385c50b09B77cDB9058E94F78dce06D66E25De
-const spctContract = new ethers.Contract('0xc8DCb2C889F3Ac4a8d72F252FCAa7bbb479F1EB6', spctAbi, signer)
+const spctContract = new ethers.Contract('0x177111A80772e550238C1140019D4FfC2141A9f3', spctAbi, signer)
 // spcl address: 0xb0655f7c94902bCb13e600Eb25eF423D1D7e75Af
-const spclContract = new ethers.Contract('0x967CE2e50377a127bBa39d765463987d0C93af0D', spclAbi, signer)
+const spclContract = new ethers.Contract('0x84323ec80907bae060a76c40F4B18C7EAeaD92A5', spclAbi, signer)
 // router address: 0xAcAa4833646eE3d019F4904074A4B644E2222e93
-const routerContract = new ethers.Contract('0xbDaB82FC9A446F23D604C21075cB3A6ae5799224', routerAbi, signer)
+const routerContract = new ethers.Contract('0x49b86b01169098910463728CfC66dB9bc88591F5', routerAbi, signer)
 
 function enableOn(trigger) {
   // on-market-open
@@ -67,15 +73,19 @@ async function spclSetup() {
   }
 
 
-  function trackEthSpctRate() {
+  async function trackEthSpctRate() {
     let lastBlock = window.currentBlock;
-    let lastRate = routerContract.getETHtoSPCT10000000() / 10000000;
-    window.currentEthToSpct = function() {
+    window.currentEthToSpct = async function() {
       if (window.currentBlock !== lastBlock) {
-        lastRate = routerContract.getETHtoSPCT10000000() / 10000000;
+        lastRate = (await routerContract.getETHtoSPCT10000000(0)).toNumber() / 10000000
       }
       return lastRate
     }
+    let lastRate = (await routerContract.getETHtoSPCT10000000(0)).toNumber() / 10000000;
+  }
+
+  async function getRate() {
+    ethers.utils.formatEther()
   }
 
 
