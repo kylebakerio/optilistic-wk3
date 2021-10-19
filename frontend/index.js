@@ -33,6 +33,11 @@ function enableOn(trigger) {
   els.forEach(el => el.removeAttribute('disabled'))
 }
 
+// only allowed 18 digits of precision
+function fixStringPrecision(n) {
+  if (typeof n !== "string") n = String(n)
+  return n.slice(0,17); 
+}
 
 /*
 format hint:
@@ -91,12 +96,15 @@ async function spclSetup() {
 
     document.querySelector('#spcl-val-one').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : `${(1 / window.SPC.spclTotalSupply) * spclEthBal} ETH + ${(1 / window.SPC.spclTotalSupply) * spclSpctBal} SPCT`;  
     document.querySelector('#spcl-balance').innerHTML = poolPercent <= 0 ? "-" : ethers.utils.formatEther(window.SPC.userSPCL);
-    document.querySelector('#spcl-pool-total').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : ethers.utils.formatEther(window.SPC.spclTotalSupply);
+    document.querySelector('#spcl-pool-total').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : ethers.utils.formatEther(window.SPC.spclTotalSupply) + "SPCL";
     
     const showPercent = window.SPC.spclTotalSupply > 0 && poolPercent > 0; 
     document.querySelector('#spcl-pool-percent').innerHTML = !showPercent ? "-" : `${poolPercent * 100}%`;
-    document.querySelector('#spcl-eth-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther(spclEthBal.mul(poolPercent))} ETH`;
-    document.querySelector('#spcl-spct-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther(spclSpctBal.mul(poolPercent))} SPCT`;
+
+    console.log('about to underflow on:', spclEthBal, spclSpctBal, poolPercent)
+
+    document.querySelector('#spcl-eth-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther( (spclEthBal * poolPercent) + "" )} ETH`;
+    document.querySelector('#spcl-spct-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther( (spclSpctBal * poolPercent) + "" )} SPCT`;
   }
   liquidityTableData();
 
@@ -117,6 +125,16 @@ async function spclSetup() {
     enableOn('on-liquidity')
   }
 
+
+/*
+// Get the filter (the second null could be omitted)
+const filter = spctContract.filters.Buy(null, null);
+
+// Query the filter (the latest could be omitted)
+const logs = await spctContract.queryFilter(filter, 0);
+
+*/
+
   //
   // get the historical event record:
   //
@@ -124,30 +142,53 @@ async function spclSetup() {
   const mintFilter = spclContract.filters.Mint(null, null);
 
   // Query the mintFilter (the latest could be omitted)
-  const mintLogs = await spctContract.queryFilter(mintFilter, 0);
+  const mintLogs = await spclContract.queryFilter(mintFilter, 0);
 
   const burnFilter = spclContract.filters.Burn(null, null);
 
   // Query the burnFilter (the latest could be omitted)
-  const burnLogs = await spctContract.queryFilter(burnFilter, 0);
+  const burnLogs = await spclContract.queryFilter(burnFilter, 0);
 
   const liquidityLogs = mintLogs.concat(burnLogs).sort(async (a,b) => {
     return (await a.getBlock()).timestamp - (await a.getBlock()).timestamp
   })
 
+  console.warn("liquidity logs:", liquidityLogs)
+
   // Print out all the values:
   mintLogs.forEach(async (log) => {
     // The log object contains lots of useful things, but the args are what you prolly want)
     console.log('time', new Date((await log.getBlock()).timestamp*1000) ); 
-    console.log('args', log.args.eth, log.args.sender);
-    console.log('full tx event log',log)
-    addEventRow('liquidity-events', {
-      liquidityProvider, 
-      ethIn: "-" + ethers.utils.formatEther(ethIn), 
-      spctIn: "-" + ethers.utils.formatEther(spctIn), 
-      spclOut: "+" + ethers.utils.formatEther(spclOut),
-      time: new Date((await log.getBlock()).timestamp*1000),
-    })
+    console.log('args', log.args);
+    // console.log('full tx event log',log)
+
+    // {
+    //   spct: ethers.utils.formatEther(ethers.BigNumber.from(log.args.eth).mul(5)),
+    //   eth: ethers.utils.formatEther(log.args.eth),
+    //   sender: log.args.sender,
+    // }
+
+    if (log.event === "Mint") {
+      // liquidityProvider, ethIn, spctIn, spclOut
+      addEventRow('liquidity-events', {
+        address: log.args.liquidityProvider, 
+        ethIn: "-" + ethers.utils.formatEther(log.args.ethIn), 
+        spctIn: "-" + ethers.utils.formatEther(log.args.spctIn), 
+        spclOut: "+" + ethers.utils.formatEther(log.args.spclOut),
+        time: new Date((await log.getBlock()).timestamp*1000),
+      })
+    } else {
+      // liquidityProvider, spclIn, ethOut, spctOut
+      addEventRow('liquidity-events', {
+        address: log.args.liquidityProvider,
+        ethOut: "+" + ethers.utils.formatEther(log.args.ethOut),
+        spctOut: "+" + ethers.utils.formatEther(log.args.spctOut), 
+        spclIn: "-" + ethers.utils.formatEther(log.args.spclIn),
+        time: new Date((await log.getBlock()).timestamp*1000),
+      })
+    }
+
+
   });
 
 
@@ -233,19 +274,24 @@ async function spclSetup() {
     // } else {
     //   document.querySelector('#buy-button').classList.remove('disabled')
     // }
-  }) 
+  })
 
   window.SPC.addLiquidity = async function() {
-    const spctToStake = document.querySelector('#spct-spcl-input').value;
-    const ethToStake = document.querySelector('#eth-spcl-input').value;
-    console.log(spctToStake, ethers.utils.parseEther(spctToStake).toString())
+    const spctToStake = fixStringPrecision(document.querySelector('#spct-spcl-input').value);
+    const ethToStake = fixStringPrecision(document.querySelector('#eth-spcl-input').value);
+    console.log("staking",{spctToStake, ethToStake})
+    const parsed = {
+      spctToStake: ethers.utils.parseEther(spctToStake).toString(),
+      ethToStake: ethers.utils.parseEther(ethToStake).toString(),
+    }
+    console.log("parsed", parsed)
     // ethers.utils.parseEther(spctToStake).toString()
     try {
       await routerContract.addLiquidity(
-        ethers.utils.parseEther( spctToStake).toString(), 
+        parsed.spctToStake,
         userAddress,
         {
-          value: ethers.utils.parseEther( ethToStake ).toString()
+          value: parsed.ethToStake
         }
       )
     } catch (e) {
@@ -268,13 +314,13 @@ async function spclSetup() {
     if (args[3] === 0) {
       args.pop()
     } else {
-      args[3] = { value: ethers.utils.parseEther( args[3] ).toString() }
+      args[3] = { value: ethers.utils.parseEther( fixStringPrecision(args[3]) ).toString() }
     }
 
     if (args[1] !== 0) {
-      args[1] = ethers.utils.parseEther( args[1] ).toString()
+      args[1] = ethers.utils.parseEther( fixStringPrecision(args[1]) ).toString()
     }
-    
+
     console.log('swap:', {ethIn, spctIn, slip}, args)
     // ethers.utils.parseEther(spctToStake).toString()
     try {
@@ -297,10 +343,10 @@ async function spclSetup() {
     // ethers.utils.parseEther(spctToStake).toString()
     try {
       await routerContract.removeLiquidity(
-        ethers.utils.parseEther(howMuchSPCL).toString(),
+        ethers.utils.parseEther(fixStringPrecision(howMuchSPCL)).toString(),
         userAddress, 
-        ethers.utils.parseEther(minETH).toString(), 
-        ethers.utils.parseEther(minSPCT).toString(), 
+        ethers.utils.parseEther(fixStringPrecision(minETH)).toString(), 
+        ethers.utils.parseEther(fixStringPrecision(minSPCT)).toString(), 
       )
       document.querySelector('#spcl-burn-input').value = 0;
     } catch (e) {
