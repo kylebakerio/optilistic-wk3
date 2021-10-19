@@ -135,6 +135,7 @@ contract SPCL is ERC20, Ownable {
 				emit SwapEth(recipient, msg.value, tokenOutAmount);
 			}
 			else {
+				(bool sent, ) = recipient.call{value: msg.value}(""); // send eth back! otherwise we'll accept the eth! untested, todo
 				emit simulateSwap(recipient, msg.value, tokenOutAmount, false);
 				// console.log("simulation, will not send <tokenOutAmount> to <recipient>",tokenOutAmount,recipient);
 			}

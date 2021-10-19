@@ -262,7 +262,7 @@ const logs = await spctContract.queryFilter(filter, 0);
   }
 
   spclContract.on("Mint", async (liquidityProvider, ethIn, spctIn, spclOut, event) => {
-    console.log("EVENT: Mint", liquidityProvider, ethIn, spctIn, spclOut);
+    console.log("EVENT: Mint", liquidityProvider, ethIn, spctIn, spclOut, event);
     if (!marketOpen   ) {
       marketOpen = true;
       enableOn('on-market-open');
@@ -279,7 +279,7 @@ const logs = await spctContract.queryFilter(filter, 0);
     liquidityTableData()
   })
   spclContract.on("Burn", async (liquidityProvider, spclIn, ethOut, spctOut, event) => {
-    console.log("EVENT: Burn", liquidityProvider, spclIn, ethOut, spctOut);
+    console.log("EVENT: Burn", liquidityProvider, spclIn, ethOut, spctOut, event);
     
     addEventRow('liquidity-events', {
       liquidityProvider, 
@@ -291,8 +291,14 @@ const logs = await spctContract.queryFilter(filter, 0);
     liquidityTableData()
   }) 
   spclContract.on("SwapEth", async (swapper, ethIn, spctOut, event) => {
-    console.log("EVENT: SwapEth", swapper, ethIn, spctOut);
+    console.log("EVENT: SwapEth", swapper, ethIn, spctOut, event);
     
+    if (window.SPC.callOnSwap && swapper === userAddress) {
+      window.SPC.callOnSwap()
+    } else {
+      console.warn("other user swap")
+    }
+
     addEventRow('swap-events', {
       swapper: ethers.utils.formatEther(swapper), 
       ethIn: ethers.utils.formatEther(ethIn) + " ETH", 
@@ -302,7 +308,13 @@ const logs = await spctContract.queryFilter(filter, 0);
     liquidityTableData()
   }) 
   spclContract.on("SwapSpct", async (swapper, spctIn, ethOut, event) => {
-    console.log("EVENT: SwapSpct", swapper, spctIn, ethOut);
+    console.log("EVENT: SwapSpct", swapper, spctIn, ethOut, event);
+
+    if (window.SPC.callOnSwap && swapper === userAddress) {
+      window.SPC.callOnSwap()
+    } else {
+      console.warn("other user swap")
+    }
     
     addEventRow('swap-events', {
       swapper: ethers.utils.formatEther(swapper), 
@@ -339,19 +351,69 @@ const logs = await spctContract.queryFilter(filter, 0);
 
   if (!window.SPC.swapDirection) window.SPC.swapDirection = "fromETH"; 
   //  function swap(uint _maxSlip, uint _spctToSwap, bool _simulate) external payable returns(uint) {
+
+
+  window.SPC.getPredictedSlip = async function() {
+    if (!window.SPC.spclTotalSupply) return "no liquidity"
+
+    const ethIn = window.SPC.swapDirection === "fromETH" ? window.SPC.swapInput : 0; // if 0, this will be removed and not sent
+    const spctIn = window.SPC.swapDirection === "fromSPCT" ? window.SPC.swapInput : '0'; // this value will stick around
+    
+    if (!ethIn && (!spctIn || spctIn == 0)) {
+      return ""
+    }
+    const slip = document.querySelector('#swap-max-slip').value;
+    const simulation = true;
+
+
+    let args = [(slip*100)+"", spctIn, /*simulation*/false, ethIn]
+    console.log('args before', args)
+    if (args[3] === 0) {
+      args.pop()
+    } else {
+      args[3] = { value: ethers.utils.parseEther( args[3] ).toString() }
+    }
+
+    if (args[1] !== 0) {
+      args[1] = ethers.utils.parseEther( fixStringPrecision(args[1]) ).toString()
+    }
+
+    // ethers.utils.parseEther(spctToStake).toString()
+    try {
+      console.log("attempting simulation with callStatic")
+      const slip10000 = await routerContract.callStatic.swap(
+        ...args
+      )
+      return slip10000.toString() / 100;
+    } catch (e) {
+      console.error('error during simulation', e)
+      console.log(e, e.message)
+      return "(unknown)";
+    }
+
+  }
+
   window.SPC.Swap = async function() {
     if (!window.SPC.spclTotalSupply) return
 
     const ethIn = window.SPC.swapDirection === "fromETH" ? window.SPC.swapInput : 0; // if 0, this will be removed and not sent
     const spctIn = window.SPC.swapDirection === "fromSPCT" ? window.SPC.swapInput : '0'; // this value will stick around
-    const slip = document.querySelector('#swap-max-slip').value
+    
+    if (!ethIn && (!spctIn || spctIn == 0)) {
+      alert("cannot swap 0")
+      return
+    } else {
+      console.log("will swap",ethIn, spctIn)
+    }
+    const slip = document.querySelector('#swap-max-slip').value;
+    const simulation = document.getElementById('simulate').checked;
 
-    let args = [(slip*100)+"", spctIn, document.getElementById('simulate'), ethIn]
+    let args = [(slip*100)+"", spctIn, /*simulation*/false, ethIn]
     console.log('args before', args)
     if (args[3] === 0) {
       args.pop()
     } else {
-      args[3] = { value: ethers.utils.parseEther( fixStringPrecision(args[3]) ).toString() }
+      args[3] = { value: ethers.utils.parseEther( args[3] ).toString() }
     }
 
     if (args[1] !== 0) {
@@ -361,9 +423,38 @@ const logs = await spctContract.queryFilter(filter, 0);
     console.log('swap:', {ethIn, spctIn, slip}, args)
     // ethers.utils.parseEther(spctToStake).toString()
     try {
-      await routerContract.swap(
-        ...args
-      )
+      if (!simulation) {
+        await routerContract.swap(
+          ...args
+        )
+      } else {
+        console.log("attempting simulation with callStatic")
+        const slip10000 = await routerContract.callStatic.swap(
+          ...args
+        )
+        console.log(ethIn, window.SPC.expectToReceive, slip10000)
+        console.log(ethIn ? ethIn + " ETH" : spctIn + " SPCT", window.SPC.expectToReceive + (ethIn ?" SPCT" : " ETH"), slip10000.toString() / 10000)
+        alert(`${simulation ? 'SIMULATION: ' : ''}Traded In: ${
+          ethIn ? ethIn + " ETH" : spctIn + " SPCT"  
+        }, Received: ${
+          window.SPC.expectToReceive + (ethIn ?" SPCT" : " ETH")
+        }, Slippage: ${
+          slip10000.toString() / 100
+        }%`)
+      }
+
+      // window.SPC.callOnSwap = (slip10000) => {
+      //   console.log(ethIn, window.SPC.expectToReceive, slip10000)
+      //   console.log(ethIn ? ethIn + " ETH" : spctIn + " SPCT", window.SPC.expectToReceive + (ethIn ?" SPCT" : " ETH"), slip10000.toString() / 10000)
+      //   alert(`${simulation ? 'SIMULATION: ' : ''}Traded In: ${
+      //     ethIn ? ethIn + " ETH" : spctIn + " SPCT"  
+      //   }, Received: ${
+      //     window.SPC.expectToReceive + (ethIn ?" SPCT" : " ETH")
+      //   }, Slippage: ${
+      //     slip10000.toString() / 10000
+      //   }%`)
+      // }
+      
     } catch (e) {
       console.error(e)
       alert(e.message)
