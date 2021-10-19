@@ -395,7 +395,7 @@ const logs = await spctContract.queryFilter(filter, 0);
       console.error('error during simulation', e)
       console.log(e, e.message)
       window.SPC.predictedSlip = ""      
-      return ">99.99%";
+      return ">99.99";
     }
   }
 
@@ -462,7 +462,7 @@ const logs = await spctContract.queryFilter(filter, 0);
       
     } catch (e) {
       console.error(e)
-      alert(e.message)
+      alert("Error attempting swap; likely slip was >99.99% \n\n" + e.message)
     }
   }
 
