@@ -346,7 +346,7 @@ const logs = await spctContract.queryFilter(filter, 0);
     const spctIn = window.SPC.swapDirection === "fromSPCT" ? window.SPC.swapInput : '0'; // this value will stick around
     const slip = document.querySelector('#swap-max-slip').value
 
-    let args = [(slip*100)+"", spctIn, false, ethIn]
+    let args = [(slip*100)+"", spctIn, document.getElementById('simulate'), ethIn]
     console.log('args before', args)
     if (args[3] === 0) {
       args.pop()

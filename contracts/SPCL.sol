@@ -19,6 +19,7 @@ contract SPCL is ERC20, Ownable {
 	event Burn(address liquidityProvider, uint spclIn, uint ethOut, uint spctOut);
 	event SwapEth(address swapper, uint ethIn, uint spctOut);
 	event SwapSpct(address swapper, uint spctIn, uint ethOut);
+	event simulateSwap(address swapper, uint input, uint output, bool ethIn); // if `ethIn` true, `in` is eth, if false, `in` is spct
 
 	constructor(address _SPCT) ERC20('SpaceLiquidityPool', 'SPCL') {
 		SPCTaddress = _SPCT;
@@ -118,6 +119,7 @@ contract SPCL is ERC20, Ownable {
 		        emit SwapSpct(recipient, _spctToSwap, tokenOutAmount);
 			}
 			else {
+				emit simulateSwap(recipient, _spctToSwap, tokenOutAmount, true);
 				// console.log("simulation, will not send <tokenOutAmount> to <recipient>",tokenOutAmount,recipient);
 			}
 		} else {
@@ -133,6 +135,7 @@ contract SPCL is ERC20, Ownable {
 				emit SwapEth(recipient, msg.value, tokenOutAmount);
 			}
 			else {
+				emit simulateSwap(recipient, msg.value, tokenOutAmount, false);
 				// console.log("simulation, will not send <tokenOutAmount> to <recipient>",tokenOutAmount,recipient);
 			}
 		}
