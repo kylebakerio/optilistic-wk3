@@ -65,12 +65,38 @@ async function spclSetup() {
     console.log("swap market closed")
   }
 
-  let userSPCL = await spclContract.balanceOf(userAddress);
-  if (userSPCL > 0) {
+  window.SPC.userSPCL = await spclContract.balanceOf(userAddress);
+  try {
+    console.log(window.SPC.userSPCL, window.SPC.userSPCL > 0, window.SPC.userSPCL.gt(0), window.SPC.userSPCL.toString());
+  } catch(e) {
+    console.warn(e)
+  }
+  if (window.SPC.userSPCL > 0) {
     enableOn('on-have-spcl')
   } else {
-    console.log("no spcl", userSPCL)
+    console.log("no spcl", window.SPC.userSPCL)
   }
+
+
+  // set spcl table data
+  async function spclTableData() {
+    window.SPC.spclTotalSupply = await spclContract.totalSupply();
+    let poolPercent = ethers.utils.formatEther(window.SPC.userSPCL) / ethers.utils.formatEther(window.SPC.spclTotalSupply);
+    let spclEthBal = (await provider.getBalance(spclContract.address))
+    let spclSpctBal = (await spctContract.balanceOf(spclContract.address))
+
+    document.querySelector('#spcl-val-one').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : `${(1 / window.SPC.spclTotalSupply) * spclEthBal} ETH + ${(1 / window.SPC.spclTotalSupply) * spclSpctBal} SPCT`;  
+    document.querySelector('#spcl-balance').innerHTML = poolPercent <= 0 ? "-" : ethers.utils.formatEther(window.SPC.userSPCL);
+    document.querySelector('#spcl-pool-total').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : ethers.utils.formatEther(window.SPC.spclTotalSupply);
+    
+    const showPercent = window.SPC.spclTotalSupply > 0 && poolPercent > 0; 
+    document.querySelector('#spcl-pool-percent').innerHTML = !showPercent ? "-" : `${poolPercent * 100}%`;
+    document.querySelector('#spcl-eth-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther(spclEthBal.mul(poolPercent))} ETH`;
+    document.querySelector('#spcl-spct-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther(spclSpctBal.mul(poolPercent))} SPCT`;
+  }
+
+  spclTableData();
+
 
 
   async function trackEthSpctRate() {
@@ -84,7 +110,7 @@ async function spclSetup() {
     let lastRate = (await routerContract.getETHtoSPCT10000000(0)).toNumber() / 10000000;
   }
 
-  spclContract.on("Mint", (liquidityProvider, ethIn, spctIn, spclOut) => {
+  spclContract.on("Mint", async (liquidityProvider, ethIn, spctIn, spclOut, event) => {
     console.log("EVENT: Mint", liquidityProvider, ethIn, spctIn, spclOut);
     if (!marketOpen) {
       marketOpen = true;
@@ -97,7 +123,7 @@ async function spclSetup() {
       ethIn: "-" + ethers.utils.formatEther(ethIn), 
       spctIn: "-" + ethers.utils.formatEther(spctIn), 
       spclOut: "+" + ethers.utils.formatEther(spclOut),
-      time: new Date((await log.getBlock()).timestamp*1000),
+      time: new Date((await event.getBlock()).timestamp * 1000),
     })
     // document.querySelector('#pause').innerHTML = paused ? "Yes" : "No";
     // if (paused) {
@@ -106,7 +132,7 @@ async function spclSetup() {
     //   document.querySelector('#buy-button').classList.remove('disabled')
     // }
   })
-  spclContract.on("Burn", (liquidityProvider, spclIn, ethOut, spctOut) => {
+  spclContract.on("Burn", async (liquidityProvider, spclIn, ethOut, spctOut, event) => {
     console.log("EVENT: Burn", liquidityProvider, spclIn, ethOut, spctOut);
 
     addEventRow('liquidity-events', {
@@ -114,7 +140,7 @@ async function spclSetup() {
       ethOut: "+" + ethers.utils.formatEther(ethOut), 
       spctOut: "+" + ethers.utils.formatEther(spctOut),
       spclIn: "-" + ethers.utils.formatEther(spclIn), 
-      time: new Date((await log.getBlock()).timestamp*1000),
+      time: new Date((await event.getBlock()).timestamp*1000),
     })
     // document.querySelector('#pause').innerHTML = paused ? "Yes" : "No";
     // if (paused) {
@@ -123,14 +149,14 @@ async function spclSetup() {
     //   document.querySelector('#buy-button').classList.remove('disabled')
     // }
   }) 
-  spclContract.on("SwapEth", (swapper, ethIn, spctOut) => {
+  spclContract.on("SwapEth", async (swapper, ethIn, spctOut, event) => {
     console.log("EVENT: SwapEth", swapper, ethIn, spctOut);
 
     addEventRow('swap-events', {
       swapper: ethers.utils.formatEther(swapper), 
       ethIn: ethers.utils.formatEther(ethIn) + " ETH", 
       spctOut: ethers.utils.formatEther(spctOut) + " SPCT",
-      time: new Date((await log.getBlock()).timestamp*1000),
+      time: new Date((await event.getBlock()).timestamp*1000),
     })
     // document.querySelector('#pause').innerHTML = paused ? "Yes" : "No";
     // if (paused) {
@@ -139,14 +165,14 @@ async function spclSetup() {
     //   document.querySelector('#buy-button').classList.remove('disabled')
     // }
   }) 
-  spclContract.on("SwapSpct", (swapper, spctIn, ethOut) => {
+  spclContract.on("SwapSpct", async (swapper, spctIn, ethOut, event) => {
     console.log("EVENT: SwapSpct", swapper, spctIn, ethOut);
 
     addEventRow('swap-events', {
       swapper: ethers.utils.formatEther(swapper), 
       spctIn: ethers.utils.formatEther(spctIn) + " SPCT", 
       ethOut: ethers.utils.formatEther(ethOut)+ " ETH",
-      time: new Date((await log.getBlock()).timestamp*1000),
+      time: new Date((await event.getBlock()).timestamp*1000),
     })
     // document.querySelector('#pause').innerHTML = paused ? "Yes" : "No";
     // if (paused) {
@@ -174,6 +200,29 @@ async function spclSetup() {
       alert(e.message)
     }
   }
+
+
+  // removeLiquidity(_howMuchSPCL, _withdrawTo,_minEth,_minSPCT)
+  window.SPC.removeLiquidity = async function() {
+    const howMuchSPCL = document.querySelector('#spcl-burn-input').value || "0";
+    const minETH = document.querySelector('#spcl-burn-min-eth').value || "0";
+    const minSPCT = document.querySelector('#spcl-burn-min-spct').value || "0";
+    console.log('burn with params:',howMuchSPCL, minETH, minSPCT)
+    // ethers.utils.parseEther(spctToStake).toString()
+    try {
+      await routerContract.removeLiquidity(
+        ethers.utils.parseEther(howMuchSPCL).toString(),
+        userAddress, 
+        ethers.utils.parseEther(minETH).toString(), 
+        ethers.utils.parseEther(minSPCT).toString(), 
+      )
+      document.querySelector('#spcl-burn-input').value = 0;
+    } catch (e) {
+      console.error(e)
+      alert(e.message)
+    }
+  }
+
 
   window.Withdraw = async function () {
     if (this.classList.contains("disabled")) return

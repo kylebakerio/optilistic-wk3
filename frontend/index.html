@@ -127,6 +127,7 @@
              <label for="eth-spcl-input">eth to stake</label>
              <input name="eth-spcl-input" oninput="
                 (async () => {
+                    if (window.SPC.spclTotalSupply <= 0) return
                     document.querySelector('#spct-spcl-input').value =  (1/(await window.currentEthToSpct())) * this.value
                 })()
              " type="number" id="eth-spcl-input" placeholder="0"/>
@@ -136,6 +137,7 @@
              <label for="spct-spcl-input">spct to stake</label>
              <input name="spct-spcl-input" oninput="
                 (async () => {
+                    if (window.SPC.spclTotalSupply <= 0) return
                     document.querySelector('#eth-spcl-input').value = this.value * (await window.currentEthToSpct())
                 })()
              " type="number" id="spct-spcl-input" placeholder="0"/>
@@ -147,30 +149,30 @@
          <div class="col-md-6">
             <div>
             <p id="spcl-redeem-amounts">ETH: 0, SPCT: 0</p>
-            <label for="spcl-redeem-input">SPCL to redeem</label>
-            <input class="on-have-spcl" disabled name="spcl-redeem-input" oninput="
-               document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
-               document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
-            " type="number" id="spcl-redeem-input" placeholder="0"/>
+            <label for="spcl-burn-input">SPCL to redeem</label>
+            <input class="on-have-spcl" disabled name="spcl-burn-input" oninput="
+            console.log(this.value, ethers.utils.formatEther((window.SPC.userSPCL)), window.SPC.userSPCL)
+             if (this.value > ethers.utils.formatEther((window.SPC.userSPCL))) {
+                this.value = ethers.utils.formatEther((window.SPC.userSPCL));
+             }
+            " type="number" id="spcl-burn-input" placeholder="0"/>
             </div>
             <div>
-            <label for="spcl-redeem-input">min eth</label>
-            <input class="on-have-spcl" disabled name="spcl-redeem-input" oninput="
-               document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
-               document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
-            " type="number" id="spcl-redeem-input" placeholder="0"/>
+            <label for="spcl-burn-min-eth">min eth</label>
+            <input class="on-have-spcl" disabled name="spcl-burn-min-eth" oninput="
+
+            " type="number" id="spcl-burn-min-eth" placeholder="0"/>
             </div>
             <div>
-            <label for="spcl-redeem-input">min spct</label>
-            <input class="on-have-spcl" disabled name="spcl-redeem-input" oninput="
-               document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
-               document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
-            " type="number" id="spcl-redeem-input" placeholder="0"/>
+            <label for="spcl-burn-min-spct">min spct</label>
+            <input class="on-have-spcl" disabled name="spcl-burn-min-spct" oninput="
+
+            " type="number" id="spcl-burn-min-spct" placeholder="0"/>
             </div>            
             <br>
             <div>
                 <br>
-                <a href="#" id="buy-spcl" onclick="Buy()" class="on-have-spcl disabled btn btn-primary">Redeem SPCL</a>
+                <a href="#" id="buy-spcl" onclick="window.SPC.removeLiquidity()" class="on-have-spcl disabled btn btn-primary">Redeem SPCL</a>
             </div>
          </div>
      </div>
@@ -182,7 +184,7 @@
        <thead>
         <tr>
          <th>Value of 1 SPCL</th>
-         <th id="user-balance-SPCL">
+         <th id="spcl-val-one">
            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/>
          </th>
         </tr>
@@ -191,12 +193,17 @@
         <tr>
         <tr>
          <td>Your SPCL</td>
-         <td id="spcl-pool-total">       
+         <td id="spcl-balance">       
             <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
         </tr>
         <tr>
          <td>Pool Size</td>
          <td id="spcl-pool-total">       
+            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
+        </tr>
+        <tr>
+         <td>Your Percent of Pool</td>
+         <td id="spcl-pool-percent">       
             <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
         </tr>
          <td>Your ETH pool entitlement</td>
@@ -206,11 +213,6 @@
         <tr>
          <td>Your SPCT pool entitlement</td>
          <td id="spcl-spct-val">
-            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
-        </tr>
-        <tr>
-         <td>Your Percent of Pool</td>
-         <td id="spcl-pool-percent">       
             <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
         </tr>
         <!-- <tr>
