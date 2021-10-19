@@ -186,6 +186,19 @@ function enableLiquidityTabs() {
     }
   }
 
+  window.Withdraw = async function () {
+    if (this.classList.contains("disabled")) return
+    if (confirm(`Withdraw ${await provider.getBalance(spctContract.address)} eth & ${} spct to liquidity pool?`)) {
+      try {
+        await spctContract.withdraw()
+        alert("funds deposited to liquidity pool")
+      } catch (e) {
+        console.error(e)
+        alert(e.message)
+      }
+    }
+  }
+
 })()
 
 

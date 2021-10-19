@@ -33,7 +33,7 @@
     <a href="#" style="display:none;" onclick="Phase()" class="owner-only btn btn-primary">Next Phase</a>
     <a href="#" style="display:none;" onclick="Pause()" class="owner-only btn btn-primary">Pause SPCToken</a>
     <a href="#" style="display:none;" onclick="Tax()" class="owner-only btn btn-primary">Toggle Tax</a>
-    <a href="#" style="display:none;" onclick="Withdraw()" class="owner-only btn btn-primary">Withdraw To SPCL</a>
+    <a href="#" style="display:none;" onclick="Withdraw.bind(this)()" class="disabled owner-only btn btn-primary">Withdraw To SPCL</a>
     <br/>
     <br/>
      <!-- buy interface -->
@@ -149,8 +149,22 @@
             <input disabled name="spcl-redeem-input" oninput="
                document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
                document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
-            " type="number" id="spcl-redeem-input" placeholder="?"/>
+            " type="number" id="spcl-redeem-input" placeholder="0"/>
             </div>
+            <div>
+            <label for="spcl-redeem-input">min eth</label>
+            <input disabled name="spcl-redeem-input" oninput="
+               document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
+               document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
+            " type="number" id="spcl-redeem-input" placeholder="0"/>
+            </div>
+            <div>
+            <label for="spcl-redeem-input">min spct</label>
+            <input disabled name="spcl-redeem-input" oninput="
+               document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
+               document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
+            " type="number" id="spcl-redeem-input" placeholder="0"/>
+            </div>            
             <br>
             <div>
                 <br>
@@ -248,11 +262,24 @@
      <a href="#" id="buy-button" onclick="Buy()" class="disabled btn btn-primary">SPCT -> ETH</a>
      <br/>
      <br/>
-     <input oninput="
+     <div>
+     <label for="spcl-redeem-input">Swap ETH</label>
+     <input disabled oninput="
         document.querySelector('#buy-button').innerHTML = `Buy ${document.querySelector('#buy-input').value} SPCToken`
         document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
-     " type="number" id="buy-input" placeholder="1 ETH"/>
-     <p style="display:inline;" id="to-eth"> for 5 SPCT</p>
+     " type="number" id="buy-input" placeholder="0"
+     />
+     <p style="display:inline;" id="to-eth"> for SPCT</p>
+     </div>
+     <br/>
+     <div>
+     <label for="spcl-redeem-input">Max Slip:</label>
+     <input disabled name="spcl-redeem-input" oninput="
+        document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
+        document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
+     " type="number" id="spcl-redeem-input" value="10"/>
+     <b>%</b>
+     </div>
      <br/>
      <br/>
      <a style="display:inline;" href="#" id="buy-button" onclick="Buy()" class="disabled btn btn-primary">Swap</a>

@@ -86,6 +86,21 @@ contract ToTheMoon is SPCToken {
         }
     }
 
+    // prevent scenario where not enough spct is left to deposit it into liquidity pool
+    // could happen from selling out of spct, or from price of spct going up
+    function getTrappedEth() external onlyOwner {
+        require(address(this).balance > 0, "no_eth");
+        require(router.haveLiquidity(), "can_open_market"); // uncomment if desire to force liquidity deposits
+
+        // uncomment block if desire to force liquidity deposits when possible
+        // uint ethBalance = address(this).balance;
+        // uint spctPrice = router.getSPCTtoETH10000000() / 10000000;
+        // require(spctPrice * ethBalance > balanceOf(owner()),"can_deposit_liquidity");
+        
+        (bool sent, ) = payable(treasury).call{value: address(this).balance}(""); // this is moved for wk3 to be in withdraw() 
+        require(sent, "Failed to send Ether");
+    }
+
     function _beforeTokenTransfer(address from, address to, uint256 amount)  internal virtual override {
         require(from == owner() || to == owner() || phase == Phases.Open, "transfers_forbidden");
         // to == minter | initial mint allowed
