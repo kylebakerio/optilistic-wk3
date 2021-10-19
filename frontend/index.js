@@ -395,7 +395,7 @@ const logs = await spctContract.queryFilter(filter, 0);
       console.error('error during simulation', e)
       console.log(e, e.message)
       window.SPC.predictedSlip = ""      
-      return "(unknown)";
+      return ">99.99%";
     }
   }
 

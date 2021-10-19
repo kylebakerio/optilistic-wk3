@@ -265,6 +265,7 @@
      <!-- buy interface -->
      <p id="current-rate"></p>
      <a href="#" id="select-swap-eth" onclick="
+        (async () => {
         if (!window.SPC.spclTotalSupply) return
         document.getElementById('select-swap-spct').classList.remove('active')
         document.getElementById('select-swap-eth').classList.add('active')
@@ -275,8 +276,10 @@
         window.SPC.swapDirection = 'fromETH'
         document.getElementById('slip-predict').innerText = 'predicted slip: ' + '...';
         document.getElementById('slip-predict').innerText = 'predicted slip: ' + await window.SPC.getPredictedSlip()+'%' || '...'
+        })()
      " class="on-liquidity disabled btn btn-primary active">ETH  -> SPCT</a>
      <a href="#" id="select-swap-spct" onclick="
+        (async () => {
         if (!window.SPC.spclTotalSupply) return
         document.getElementById('select-swap-eth').classList.remove('active')
         document.getElementById('select-swap-spct').classList.add('active')
@@ -287,6 +290,7 @@
         window.SPC.swapDirection = 'fromSPCT'
         document.getElementById('slip-predict').innerText = 'predicted slip: ' + '...';
         document.getElementById('slip-predict').innerText = 'predicted slip: ' + await window.SPC.getPredictedSlip()+'%' || '...'
+        })()
      " class="on-liquidity disabled btn btn-primary">SPCT -> ETH</a>
      <br/>
      <br/>
