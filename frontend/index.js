@@ -79,8 +79,12 @@ async function spclSetup() {
 
 
   // set spcl table data
-  async function spclTableData() {
+  async function liquidityTableData() {
     window.SPC.spclTotalSupply = await spclContract.totalSupply();
+    if (window.SPC.spclTotalSupply > 0) {
+      enableOn('on-liquidity')
+    }
+
     let poolPercent = ethers.utils.formatEther(window.SPC.userSPCL) / ethers.utils.formatEther(window.SPC.spclTotalSupply);
     let spclEthBal = (await provider.getBalance(spclContract.address))
     let spclSpctBal = (await spctContract.balanceOf(spclContract.address))
@@ -94,8 +98,57 @@ async function spclSetup() {
     document.querySelector('#spcl-eth-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther(spclEthBal.mul(poolPercent))} ETH`;
     document.querySelector('#spcl-spct-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther(spclSpctBal.mul(poolPercent))} SPCT`;
   }
+  liquidityTableData();
 
-  spclTableData();
+
+  // set spcl table data
+  async function swapTableData() {
+    window.SPC.spclTotalSupply = await spclContract.totalSupply();
+    let poolPercent = ethers.utils.formatEther(window.SPC.userSPCL) / ethers.utils.formatEther(window.SPC.spclTotalSupply);
+    let spclEthBal = (await provider.getBalance(spclContract.address))
+    let spclSpctBal = (await spctContract.balanceOf(spclContract.address))
+
+    document.querySelector('#swap-user-spct').innerHTML = ethers.utils.formatEther(window.SPC.userSPCT)
+    document.querySelector('#swap-user-eth').innerHTML = ethers.utils.formatEther((await provider.getBalance(userAddress)))
+  }
+  swapTableData();
+
+  if (window.SPC.spclTotalSupply) {
+    enableOn('on-liquidity')
+  }
+
+  //
+  // get the historical event record:
+  //
+  // Get the filter (the second null could be omitted)
+  const mintFilter = spclContract.filters.Mint(null, null);
+
+  // Query the mintFilter (the latest could be omitted)
+  const mintLogs = await spctContract.queryFilter(mintFilter, 0);
+
+  const burnFilter = spclContract.filters.Burn(null, null);
+
+  // Query the burnFilter (the latest could be omitted)
+  const burnLogs = await spctContract.queryFilter(burnFilter, 0);
+
+  const liquidityLogs = mintLogs.concat(burnLogs).sort(async (a,b) => {
+    return (await a.getBlock()).timestamp - (await a.getBlock()).timestamp
+  })
+
+  // Print out all the values:
+  mintLogs.forEach(async (log) => {
+    // The log object contains lots of useful things, but the args are what you prolly want)
+    console.log('time', new Date((await log.getBlock()).timestamp*1000) ); 
+    console.log('args', log.args.eth, log.args.sender);
+    console.log('full tx event log',log)
+    addEventRow('liquidity-events', {
+      liquidityProvider, 
+      ethIn: "-" + ethers.utils.formatEther(ethIn), 
+      spctIn: "-" + ethers.utils.formatEther(spctIn), 
+      spclOut: "+" + ethers.utils.formatEther(spclOut),
+      time: new Date((await log.getBlock()).timestamp*1000),
+    })
+  });
 
 
 
@@ -201,6 +254,39 @@ async function spclSetup() {
     }
   }
 
+  if (!window.SPC.swapDirection) window.SPC.swapDirection = "fromETH"; 
+  //  function swap(uint _maxSlip, uint _spctToSwap, bool _simulate) external payable returns(uint) {
+  window.SPC.Swap = async function() {
+    if (!window.SPC.spclTotalSupply) return
+
+    const ethIn = window.SPC.swapDirection === "fromETH" ? window.SPC.swapInput : 0; // if 0, this will be removed and not sent
+    const spctIn = window.SPC.swapDirection === "fromSPCT" ? window.SPC.swapInput : '0'; // this value will stick around
+    const slip = document.querySelector('#swap-max-slip').value
+
+    let args = [(slip*100)+"", spctIn, false, ethIn]
+    console.log('args before', args)
+    if (args[3] === 0) {
+      args.pop()
+    } else {
+      args[3] = { value: ethers.utils.parseEther( args[3] ).toString() }
+    }
+
+    if (args[1] !== 0) {
+      args[1] = ethers.utils.parseEther( args[1] ).toString()
+    }
+    
+    console.log('swap:', {ethIn, spctIn, slip}, args)
+    // ethers.utils.parseEther(spctToStake).toString()
+    try {
+      await routerContract.swap(
+        ...args
+      )
+    } catch (e) {
+      console.error(e)
+      alert(e.message)
+    }
+  }
+
 
   // removeLiquidity(_howMuchSPCL, _withdrawTo,_minEth,_minSPCT)
   window.SPC.removeLiquidity = async function() {
@@ -260,8 +346,9 @@ async function spclSetup() {
   }
   
   console.log('treasury', ethers.utils.formatEther(await spctContract.totalSupply()) );
+  window.SPC.userSPCT = await spctContract.balanceOf(userAddress);
 
-  document.querySelector('#user-balance').innerHTML = ethers.utils.formatEther(await spctContract.balanceOf(userAddress));
+  document.querySelector('#user-balance').innerHTML = ethers.utils.formatEther(window.SPC.userSPCT);
   document.querySelector('#invested').innerHTML = ethers.utils.formatEther(await spctContract.fundraiseTotal());
   document.querySelector('#all-spct').innerHTML = ethers.utils.formatEther(ethers.BigNumber.from(await spctContract.fundraiseTotal()).mul(5));
 

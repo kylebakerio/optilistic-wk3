@@ -263,31 +263,57 @@
        </div> -->  
 
      <!-- buy interface -->
-     <a href="#" id="buy-button" onclick="Buy()" class="btn btn-primary active">ETH  -> SPCT</a>
-     <a href="#" id="buy-button" onclick="Buy()" class="btn btn-primary">SPCT -> ETH</a>
+     <a href="#" id="select-swap-eth" onclick="
+        if (!window.SPC.spclTotalSupply) return
+        document.getElementById('select-swap-spct').classList.remove('active')
+        document.getElementById('select-swap-eth').classList.add('active')
+        document.getElementById('swap-label').innerText = `ETH for ${
+            document.getElementById('swap-input').value * window.SPC.lastRate
+        } SPCT`;
+        window.SPC.swapDirection = 'fromETH'
+     " class="on-liquidity disabled btn btn-primary active">ETH  -> SPCT</a>
+     <a href="#" id="select-swap-spct" onclick="
+        if (!window.SPC.spclTotalSupply) return
+        document.getElementById('select-swap-eth').classList.remove('active')
+        document.getElementById('select-swap-spct').classList.add('active')
+        document.getElementById('swap-label').innerText = `SPCT for ${
+            document.getElementById('swap-input').value * 1/window.SPC.lastRate
+        } ETH`;
+        window.SPC.swapDirection = 'fromSPCT'
+     " class="on-liquidity disabled btn btn-primary">SPCT -> ETH</a>
      <br/>
      <br/>
      <div>
-     <label for="spcl-redeem-input">Swap ETH</label>
-     <input oninput="
-        document.querySelector('#buy-button').innerHTML = `Buy ${document.querySelector('#buy-input').value} SPCToken`
-        document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
-     " type="number" id="buy-input" placeholder="0"
+     <label for="swap-input">Swap</label>
+     <input disabled oninput="
+      (async(el) => {
+        if (window.SPC.spclTotalSupply <= 0) return
+        window.SPC.swapInput = el.value;
+        window.SPC.lastRate = await window.currentEthToSpct();
+        document.getElementById('swap-label').innerText = `${
+            window.SPC.swapDirection === 'fromETH' ? 'ETH' : 'SPCT'
+        } for ${
+         el.value * (window.SPC.swapDirection === 'fromETH' ? window.SPC.lastRate : 1/window.SPC.lastRate)
+       } ${
+            window.SPC.swapDirection === 'fromETH' ? 'SPCT' : 'ETH'
+        }`; 
+      })(this)
+     " type="number" class="on-liquidity" name="swap-input" id="swap-input" placeholder="0"
      />
-     <p style="display:inline;" id="to-eth"> for SPCT</p>
+     <p style="display:inline;" id="swap-label"> ETH for 0 SPCT</p>
      </div>
      <br/>
      <div>
-     <label for="spcl-redeem-input">Max Slip:</label>
-     <input name="spcl-redeem-input" step="0.01" min="0.01" max="100" oninput="
-        document.querySelector('#buy-button').innerHTML = `Stake ${document.querySelector('#buy-input').value} SPCL`
-        document.querySelector('#to-eth').innerHTML = ` @ ${document.querySelector('#buy-input').value/5} eth`
-     " type="number" id="spcl-redeem-input" value="10"/>
+     <label for="swap-max-slip">Max Slip:</label>
+     <input disabled class="on-liquidity" name="swap-max-slip" step="0.01" min="0.01" max="100" oninput="
+      if (this.value < 0.01) this.value = 0.01
+      if (this.value > 100) this.value = 100
+     " type="number" id="swap-max-slip" value="10"/>
      <b>%</b>
      </div>
      <br/>
      <br/>
-     <a style="display:inline;" href="#" id="buy-button" onclick="Buy()" class="btn btn-primary">Swap</a>
+     <a style="display:inline;" href="#" id="swap-button" onclick="window.SPC.Swap()" class="on-liquidity disabled btn btn-primary">Swap</a>
 
      <br/>
      <br/>
@@ -296,7 +322,7 @@
        <thead>
         <tr>
          <th>Your SPCToken</th>
-         <th id="user-balance">
+         <th id="swap-user-spct">
            <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/>
          </th>
         </tr>
@@ -304,7 +330,7 @@
        <tbody>
         <tr>
          <td>Your ETH</td>
-         <td id="invested">       
+         <td id="swap-user-eth">       
             <img style="max-height:15px;max-width:15px;" src="./eth-black-coin.gif"/></td>
         </tr>
        </tbody>
