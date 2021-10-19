@@ -114,7 +114,7 @@ async function spclSetup() {
     const showPercent = window.SPC.spclTotalSupply > 0 && poolPercent > 0; 
     document.querySelector('#spcl-pool-percent').innerHTML = !showPercent ? "-" : `${poolPercent}%`;
 
-    console.log('about to underflow on:', spclEthBal, spclSpctBal, poolPercent)
+    // console.log('used to underflow on:', spclEthBal, spclSpctBal, poolPercent)
 
     document.querySelector('#spcl-eth-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther( ((spclEthBal * poolPercent) + "").split(".")[0] )} ETH`;
     document.querySelector('#spcl-spct-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther( ((spclSpctBal * poolPercent) + "").split(".")[0] )} SPCT`;
@@ -170,13 +170,13 @@ const logs = await spctContract.queryFilter(filter, 0);
     return (await a.getBlock()).timestamp - (await a.getBlock()).timestamp
   })
 
-  console.warn("liquidity logs:", liquidityLogs)
+  // console.warn("liquidity logs:", liquidityLogs)
 
   // Print out all the values:
   mintLogs.forEach(async (log) => {
     // The log object contains lots of useful things, but the args are what you prolly want)
-    console.log('time', new Date((await log.getBlock()).timestamp*1000) ); 
-    console.log('args', log.args);
+    // console.log('time', new Date((await log.getBlock()).timestamp*1000) ); 
+    // console.log('args', log.args);
     // console.log('full tx event log',log)
 
     // {
@@ -222,13 +222,13 @@ const logs = await spctContract.queryFilter(filter, 0);
     return (await a.getBlock()).timestamp - (await a.getBlock()).timestamp
   })
 
-  console.warn("swap logs:", swapLogs)
+  // console.warn("swap logs:", swapLogs)
 
   // Print out all the values:
   swapLogs.forEach(async (log) => {
     // The log object contains lots of useful things, but the args are what you prolly want)
-    console.log('time', new Date((await log.getBlock()).timestamp*1000) ); 
-    console.log('args', log.args);
+    // console.log('time', new Date((await log.getBlock()).timestamp*1000) ); 
+    // console.log('args', log.args);
     // console.log('full tx event log',log)
 
     // {
@@ -473,9 +473,9 @@ const logs = await spctContract.queryFilter(filter, 0);
   // Print out all the values:
   logs.forEach(async (log) => {
     // The log object contains lots of useful things, but the args are what you prolly want)
-    console.log('time', new Date((await log.getBlock()).timestamp*1000) ); 
-    console.log('args', log.args.eth, log.args.sender);
-    console.log('full tx event log',log)
+    // console.log('time', new Date((await log.getBlock()).timestamp*1000) ); 
+    // console.log('args', log.args.eth, log.args.sender);
+    // console.log('full tx event log',log)
     addEventRow('transactions', {
       spct: ethers.utils.formatEther(ethers.BigNumber.from(log.args.eth).mul(5)),
       eth: ethers.utils.formatEther(log.args.eth),
