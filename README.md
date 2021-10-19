@@ -1,11 +1,16 @@
 # excuses
+oct 19:
+alright, should be acceptable. deployed functional front end.
+I encourage you to play with the deployed front end to test the contract, but if you find a mistake, there's a good change the bug is in the front end, not the contract--be sure to confirm your finding by writing a test in the test code against the contract directly.
+
 
 oct 18 2021:
-Lost half of project time to moving, traveling, working. Code is messy right now. Front end portion is not added. Tests are passing, requirements are met (including optional requirement for slippage check), but just barely.
+Lost half of project time to moving, traveling, working, got permission to finish over weekend instead. Code is messy right now. Front end portion is not added. Tests are passing, requirements are met (including optional requirement for slippage check), but just barely.
 
-Planning to clean up / add front end tonight. 
 
-# deployed ICO front end, which will have LP/swap added to it later (this evening hopefully):
+# deployed ICO front end
+works with rinkeby eth
+only tested with metamask wallet
 https://spctoken.surge.sh
 tested with metamask connected to rinkeby.
 
@@ -24,9 +29,7 @@ to run local server, go into `frontend` folder and run:
 to deploy front end, go into `frontend` folder and run
 `surge`
 
-
 # Basic Sample Hardhat Project
-
 This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts.
 
 Try running some of the following tasks:
