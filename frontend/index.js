@@ -39,6 +39,14 @@ function fixStringPrecision(n) {
   return n.slice(0,17); 
 }
 
+// trims off numbers that are excessively precise without throwing errors
+// technically, do not do this--handle it correctly in your inputs
+// this is a proof of concept, though, and 18 points of precision is enough...
+const originalFormatEther = ethers.utils.formatEther.bind(ethers.utils);
+ethers.utils.formatEther = function(input) {
+  originalFormatEther(fixStringPrecision(input))
+}
+
 /*
 format hint:
 addEventRow('transactions', {
@@ -88,12 +96,14 @@ async function spclSetup() {
     window.SPC.spclTotalSupply = await spclContract.totalSupply();
     if (window.SPC.spclTotalSupply > 0) {
       enableOn('on-liquidity')
+    } else {
+      console.warn("TODO: if all liquidity removed, handle reverse on-liquidity gui event")
     }
 
     let poolPercent = ethers.utils.formatEther(window.SPC.userSPCL) / ethers.utils.formatEther(window.SPC.spclTotalSupply);
     let spclEthBal = (await provider.getBalance(spclContract.address))
     let spclSpctBal = (await spctContract.balanceOf(spclContract.address))
-
+    window.SPC.userSPCL = await spclContract.balanceOf(userAddress);
     
 
 
@@ -102,12 +112,12 @@ async function spclSetup() {
     document.querySelector('#spcl-pool-total').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : ethers.utils.formatEther(window.SPC.spclTotalSupply) + " SPCL";
     
     const showPercent = window.SPC.spclTotalSupply > 0 && poolPercent > 0; 
-    document.querySelector('#spcl-pool-percent').innerHTML = !showPercent ? "-" : `${poolPercent * 100}%`;
+    document.querySelector('#spcl-pool-percent').innerHTML = !showPercent ? "-" : `${poolPercent}%`;
 
     console.log('about to underflow on:', spclEthBal, spclSpctBal, poolPercent)
 
-    document.querySelector('#spcl-eth-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther( (spclEthBal * poolPercent) + "" )} ETH`;
-    document.querySelector('#spcl-spct-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther( (spclSpctBal * poolPercent) + "" )} SPCT`;
+    document.querySelector('#spcl-eth-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther( ((spclEthBal * poolPercent) + "").split(".")[0] )} ETH`;
+    document.querySelector('#spcl-spct-val').innerHTML = !showPercent ? "-" : `${ethers.utils.formatEther( ((spclSpctBal * poolPercent) + "").split(".")[0] )} SPCT`;
 
     swapTableData();
   }
@@ -121,10 +131,10 @@ async function spclSetup() {
     let spclEthBal = (await provider.getBalance(spclContract.address))
     let spclSpctBal = (await spctContract.balanceOf(spclContract.address))
 
+    document.querySelector('#current-rate').innerHTML = `Current Rate: 1 ETH = ${1 * (await window.currentEthToSpct())} SPCT`;
     document.querySelector('#swap-pool-all').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : `${(1 / window.SPC.spclTotalSupply) * spclEthBal} ETH + ${(1 / window.SPC.spclTotalSupply) * spclSpctBal} SPCT`
     document.querySelector('#swap-user-spct').innerHTML = ethers.utils.formatEther(window.SPC.userSPCT)
     document.querySelector('#swap-user-eth').innerHTML = ethers.utils.formatEther((await provider.getBalance(userAddress)))
-
   }
   
 
