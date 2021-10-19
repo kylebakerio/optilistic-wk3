@@ -112,7 +112,7 @@ async function spclSetup() {
     document.querySelector('#spcl-pool-total').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : ethers.utils.formatEther(window.SPC.spclTotalSupply) + " SPCL";
     
     const showPercent = window.SPC.spclTotalSupply > 0 && poolPercent > 0; 
-    document.querySelector('#spcl-pool-percent').innerHTML = !showPercent ? "-" : `${poolPercent}%`;
+    document.querySelector('#spcl-pool-percent').innerHTML = !showPercent ? "-" : `${poolPercent*100}%`;
 
     // console.log('used to underflow on:', spclEthBal, spclSpctBal, poolPercent)
 
