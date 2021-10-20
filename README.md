@@ -8,7 +8,7 @@ oct 18 2021:
 Lost half of project time to moving, traveling, working, got permission to finish over weekend instead. Code is messy right now. Front end portion is not added. Tests are passing, requirements are met (including optional requirement for slippage check), but just barely.
 
 
-# deployed ICO front end
+# deployed ICO/Liquidity/Swapping front end
 works with rinkeby eth
 only tested with metamask wallet
 https://spctoken.surge.sh
