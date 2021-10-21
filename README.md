@@ -1,3 +1,8 @@
+# comments
+- the very last updates related to event updates around the ability to use the 'simulation' argument. In the end, this is not an ideal or necessary implementation--I didn't yet know about the concept of doing a 'static call' that can be used instead. This would be removed.
+- a deadline timestamp for calls should be added
+
+
 # excuses
 oct 19:
 alright, should be acceptable. deployed functional front end.
