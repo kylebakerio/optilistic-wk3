@@ -143,7 +143,7 @@ async function spclSetup() {
     let spclEthBal = (await provider.getBalance(spclContract.address))
     let spclSpctBal = (await spctContract.balanceOf(spclContract.address))
 
-    document.querySelector('#current-rate').innerHTML = `Current Rate: 1 ETH = ${await window.currentEthToSpct()} SPCT`;
+    document.querySelector('#current-rate').innerHTML = `Current Rate: 1 ETH = ${await window.currentSPCTtoETH()} SPCT`;
     document.querySelector('#swap-pool-all').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : `${(1 / window.SPC.spclTotalSupply) * spclEthBal} ETH + ${(1 / window.SPC.spclTotalSupply) * spclSpctBal} SPCT`
     document.querySelector('#swap-user-spct').innerHTML = ethers.utils.formatEther(window.SPC.userSPCT)
     document.querySelector('#swap-user-eth').innerHTML = ethers.utils.formatEther((await provider.getBalance(userAddress)))
@@ -264,14 +264,14 @@ const logs = await spctContract.queryFilter(filter, 0);
 
   async function trackEthSpctRate() {
     let lastBlock = window.currentBlock;
-    window.currentEthToSpct = async function() {
+    window.currentSPCTtoETH = async function() {
       if (!window.SPC.lastRate || window.currentBlock !== lastBlock) {
-        console.log("raw rate",(await routerContract.getETHtoSPCT10000000(0)).toNumber(), (await routerContract.getETHtoSPCT10000000(0)).toNumber() / 10000000)
-        window.SPC.lastRate = (await routerContract.getETHtoSPCT10000000(0)).toNumber() / 10000000
+        console.log("raw rate",(await routerContract.getSPCTtoETH10000000(0)).toNumber(), (await routerContract.getSPCTtoETH10000000(0)).toNumber() / 10000000)
+        window.SPC.lastRate = (await routerContract.getSPCTtoETH10000000(0)).toNumber() / 10000000
       }
       return window.SPC.lastRate
     }
-    window.currentEthToSpct()
+    window.currentSPCTtoETH()
   }
 
   spclContract.on("Mint", async (liquidityProvider, ethIn, spctIn, spclOut, event) => {
@@ -451,16 +451,16 @@ const logs = await spctContract.queryFilter(filter, 0);
         console.log(ethIn ? ethIn + " ETH" : spctIn + " SPCT", window.SPC.expectToReceive + (ethIn ?" SPCT" : " ETH"), slip10000.toString() / 10000)
         alert(`${simulation ? 'SIMULATION: ' : ''}\nTrade In:\n${
           ethIn ? ethIn + " ETH" : spctIn + " SPCT"  
-        }\nExpect to Receive:\n${
+        }\nPredicted to Receive:\n${
           expectedReturn + (ethIn ?" SPCT" : " ETH")
         }\nvs. Nominal:\n${
           window.SPC.expectToReceive + (ethIn ?" SPCT" : " ETH")
-        }\nExpected Slippage:\n${
+        }\nPredicted Slippage:\n${
           slip10000.toString() / 100
-        }%\nExpected Effective Rate:\n1 ETH : ${
+        }%\nPredicted Effective Rate:\n1 ETH : ${
           ethIn ? expectedReturn/ethIn : spctIn/expectedReturn
         } SPCT\nvs. Nominal:\n1 ETH : ${
-          await window.currentEthToSpct()
+          await window.currentSPCTtoETH()
         } SPCT`)
       }
 
@@ -474,7 +474,7 @@ const logs = await spctContract.queryFilter(filter, 0);
         }, Slip: ${
           predictedSlip
         }%\n\nActual:\n Trade In: ${swapIn} ${unitIn} Receive: ${swapOut} ${unitIn === "ETH" ? "SPCT" : "ETH"}, Slip: `)
-      })(window.SPC.predictedSlip, window.SPC.expectToReceive, await window.currentEthToSpct())
+      })(window.SPC.predictedSlip, window.SPC.expectToReceive, await window.currentSPCTtoETH())
       
     } catch (e) {
       console.error(e)
