@@ -272,26 +272,31 @@
         window.SPC.expectToReceive = document.getElementById('swap-input').value * window.SPC.lastRate; 
         document.getElementById('swap-label').innerText = `ETH for ${
             window.SPC.expectToReceive
-        } SPCT`;
+        } SPCT (without slip)`;
         window.SPC.swapDirection = 'fromETH'
         document.getElementById('slip-predict').innerText = 'predicted slip: ' + '...';
         document.getElementById('slip-predict').innerText = 'predicted slip: ' + await window.SPC.getPredictedSlip()+'%' || '...'
         })()
      " class="on-liquidity disabled btn btn-primary active">ETH  -> SPCT</a>
      <a href="#" id="select-swap-spct" onclick="
-        (async () => {
-        if (!window.SPC.spclTotalSupply) return
+        (async (el) => {
+        if (window.SPC.userSPCT == 0) {
+            this.classList.add('disabled');
+            this.title = 'you have no spct to trade';
+            return
+        }
+        if (!window.SPC.spclTotalSupply || this.disabled) return;
         document.getElementById('select-swap-eth').classList.remove('active')
         document.getElementById('select-swap-spct').classList.add('active')
         window.SPC.expectToReceive = document.getElementById('swap-input').value * 1/window.SPC.lastRate;
         document.getElementById('swap-label').innerText = `SPCT for ${
             window.SPC.expectToReceive
-        } ETH`;
+        } ETH (without slip)`;
         window.SPC.swapDirection = 'fromSPCT'
         document.getElementById('slip-predict').innerText = 'predicted slip: ' + '...';
         document.getElementById('slip-predict').innerText = 'predicted slip: ' + await window.SPC.getPredictedSlip()+'%' || '...'
-        })()
-     " class="on-liquidity disabled btn btn-primary">SPCT -> ETH</a>
+        })(this)
+     " class="disabled on-have-spct disabled btn btn-primary">SPCT -> ETH</a>
      <br/>
      <br/>
      <div>
@@ -309,7 +314,7 @@
          window.SPC.expectToReceive
        } ${
             window.SPC.swapDirection === 'fromETH' ? 'SPCT' : 'ETH'
-        }`;
+        } (without slip)`;
         document.getElementById('slip-predict').innerText = 'predicted slip: ' + '...';
         document.getElementById('slip-predict').innerText = 'predicted slip: ' + await window.SPC.getPredictedSlip()+'%' || '...'
       })(this)
@@ -320,11 +325,11 @@
      <br/>
      <div>
      <label for="swap-max-slip">Max Slip:</label>
-     <input disabled class="on-liquidity" name="swap-max-slip" step="0.01" min="0.01" max="100" oninput="
+     <input disabled class="on-liquidity" name="swap-max-slip" step="0.01" min="0.01" max="99.99" oninput="
       if (!this.value) el.value = 0;
-      if (this.value < 0.01) this.value = 0.01
-      if (this.value > 100) this.value = 100
-     " type="number" id="swap-max-slip" value="10"/>
+      if (this.value < 0.01) this.value = 0.01;
+      if (this.value > 99.99) this.value = 99.99;
+     " type="number" id="swap-max-slip" value="100"/>
      <b>%</b>
      </div>
      <p id="slip-predict"></p>

@@ -28,6 +28,7 @@ function enableOn(trigger) {
   // on-market-open
   // on-open-phase
   // on-have-spcl
+  // on-have-spct
   const els = [...document.querySelectorAll("." + trigger)]
   els.forEach(el => el.classList.remove('disabled'))
   els.forEach(el => el.removeAttribute('disabled'))
@@ -97,9 +98,11 @@ async function spclSetup() {
 
   // set spcl table data
   async function liquidityTableData() {
+    console.log("updating liquidity table")
     window.SPC.spclTotalSupply = await spclContract.totalSupply();
     if (window.SPC.spclTotalSupply > 0) {
       enableOn('on-liquidity')
+      trackEthSpctRate()
     } else {
       console.warn("TODO: if all liquidity removed, handle reverse on-liquidity gui event")
     }
@@ -109,8 +112,6 @@ async function spclSetup() {
     let spclSpctBal = (await spctContract.balanceOf(spclContract.address))
     window.SPC.userSPCL = await spclContract.balanceOf(userAddress);
     
-
-
     document.querySelector('#spcl-val-one').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : `${(1 / window.SPC.spclTotalSupply) * spclEthBal} ETH + ${(1 / window.SPC.spclTotalSupply) * spclSpctBal} SPCT`;  
     document.querySelector('#spcl-balance').innerHTML = poolPercent <= 0 ? "-" : ethers.utils.formatEther(window.SPC.userSPCL);
     document.querySelector('#spcl-pool-total').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : ethers.utils.formatEther(window.SPC.spclTotalSupply) + " SPCL";
@@ -126,10 +127,17 @@ async function spclSetup() {
     swapTableData();
   }
   liquidityTableData();
+  window.SPC.liquidityTableData = liquidityTableData
 
 
   // set spcl table data
   async function swapTableData() {
+    console.log("updating swap table")
+    window.SPC.userSPCT = await spctContract.balanceOf(userAddress);
+    if (window.SPC.userSPCT > 0) {
+      console.log("HAVE SPCT",window.SPC.userSPCT, window.SPC.userSPCT>0)
+      enableOn('on-have-spct');
+    }
     window.SPC.spclTotalSupply = await spclContract.totalSupply();
     let poolPercent = ethers.utils.formatEther(window.SPC.userSPCL) / ethers.utils.formatEther(window.SPC.spclTotalSupply);
     let spclEthBal = (await provider.getBalance(spclContract.address))
@@ -267,10 +275,9 @@ const logs = await spctContract.queryFilter(filter, 0);
 
   spclContract.on("Mint", async (liquidityProvider, ethIn, spctIn, spclOut, event) => {
     console.log("EVENT: Mint", liquidityProvider, ethIn, spctIn, spclOut, event);
-    if (!marketOpen   ) {
+    if (!marketOpen) {
       marketOpen = true;
       enableOn('on-market-open');
-      trackEthSpctRate()
     }
 
     addEventRow('liquidity-events', {
@@ -409,7 +416,7 @@ const logs = await spctContract.queryFilter(filter, 0);
       alert("cannot swap 0")
       return
     } else {
-      console.log("will swap",ethIn, spctIn)
+      console.log("will swap",{ethIn, spctIn})
     }
     const slip = document.querySelector('#swap-max-slip').value;
     const simulation = document.getElementById('simulate').checked;
@@ -438,31 +445,35 @@ const logs = await spctContract.queryFilter(filter, 0);
         const slip10000 = await routerContract.callStatic.swap(
           ...args
         )
+        const expectedReturn = (window.SPC.expectToReceive * (slip10000.toString()/10000) );
         console.log(ethIn, window.SPC.expectToReceive, slip10000)
         console.log(ethIn ? ethIn + " ETH" : spctIn + " SPCT", window.SPC.expectToReceive + (ethIn ?" SPCT" : " ETH"), slip10000.toString() / 10000)
-        alert(`${simulation ? 'SIMULATION: ' : ''}Traded In: ${
+        alert(`${simulation ? 'SIMULATION: ' : ''}\nTrade In: ${
           ethIn ? ethIn + " ETH" : spctIn + " SPCT"  
-        }, Received: ${
-          window.SPC.expectToReceive + (ethIn ?" SPCT" : " ETH")
-        }, Expected Slippage: ${
+        }\nExpect to Receive: ${
+          expectedReturn + (ethIn ?" SPCT" : " ETH")
+        }\nExpected Slippage: ${
           slip10000.toString() / 100
-        }%`)
+        }%\nExpected Effective Rate: 1 ETH : ${
+          ethIn ? expectedReturn/ethIn : expectedReturn/spctIn
+        } SPCT`)
       }
 
-      window.SPC.callOnSwap = (slip10000) => {
-        console.log(ethIn, window.SPC.expectToReceive, slip10000)
-        alert(`${simulation ? 'SIMULATION: ' : ''}Traded In: ${
+      // (swapper, ethIn, spctOut, event)
+      window.SPC.callOnSwap = ((predictedSlip, expectToReceive, nominalRate) => (unitIn, swapIn, swapOut) => {
+        console.log('was expected pre-swap:', ethIn, spctIn, expectToReceive, slip10000)
+        alert(`Trade Complete\n\nExpected\n: Trade in: ${
           ethIn ? ethIn + " ETH" : spctIn + " SPCT"  
-        }, Received: ${
-          window.SPC.expectToReceive + (ethIn ?" SPCT" : " ETH")
-        }, Slippage Prediction: ${
-          window.SPC.predictedSlip
-        }%`)
-      }
+        }, Receive: ${
+          expectToReceive + (ethIn ?" SPCT" : " ETH")
+        }, Slip: ${
+          predictedSlip
+        }%\n\nActual:\n Trade In: ${swapIn} ${unitIn} Receive: ${swapOut} ${unitIn === "ETH" ? "SPCT" : "ETH"}, Slip: `)
+      })(window.SPC.predictedSlip, window.SPC.expectToReceive, await window.currentEthToSpct())
       
     } catch (e) {
       console.error(e)
-      alert("Error attempting swap; likely slip was >99.99% \n\n" + e.message)
+      alert("Error attempting swap:\nlikely slip is outside permitted range.\n\n" + e.message)
     }
   }
 
@@ -513,7 +524,7 @@ const logs = await spctContract.queryFilter(filter, 0);
 
   // put on window for debugging, obvs don't do this.
   window.userAddress = await signer.getAddress();
-  console.log(userAddress)
+  console.log('user address', userAddress)
 
   if ((await spctContract.owner()).toUpperCase() == userAddress.toUpperCase()) {
     console.log("owner, showing admin buttons")
@@ -523,30 +534,34 @@ const logs = await spctContract.queryFilter(filter, 0);
   } else {
     console.log("not spctContract owner")
   }
-  
-  console.log('treasury', ethers.utils.formatEther(await spctContract.totalSupply()) );
-  window.SPC.userSPCT = await spctContract.balanceOf(userAddress);
 
-  document.querySelector('#user-balance').innerHTML = ethers.utils.formatEther(window.SPC.userSPCT);
-  document.querySelector('#invested').innerHTML = ethers.utils.formatEther(await spctContract.fundraiseTotal());
-  document.querySelector('#all-spct').innerHTML = ethers.utils.formatEther(ethers.BigNumber.from(await spctContract.fundraiseTotal()).mul(5));
+  async function ICOTableUpdate() {
 
-  const phase = (await spctContract.phase());
-  document.querySelector('#phase').innerHTML = phase == 0 ? "Seed" : phase == 1 ? "General" : "Open";
-  if (phase == 2) {
-    enableOn('on-open-phase')
+    console.log('treasury', ethers.utils.formatEther(await spctContract.totalSupply()) );
+
+    window.SPC.userSPCT = await spctContract.balanceOf(userAddress);
+    document.querySelector('#user-balance').innerHTML = ethers.utils.formatEther(window.SPC.userSPCT);
+    document.querySelector('#invested').innerHTML = ethers.utils.formatEther(await spctContract.fundraiseTotal());
+    document.querySelector('#all-spct').innerHTML = ethers.utils.formatEther(ethers.BigNumber.from(await spctContract.fundraiseTotal()).mul(5));
+
+    const phase = (await spctContract.phase());
+    document.querySelector('#phase').innerHTML = phase == 0 ? "Seed" : phase == 1 ? "General" : "Open";
+    if (phase == 2) {
+      enableOn('on-open-phase')
+    }
+
+    let paused = await spctContract.paused();
+    document.querySelector('#pause').innerHTML = paused ? "Yes" : "No";
+
+    if (!paused) {
+      // todo: add in whitelist check here
+      document.querySelector('#buy-button').classList.remove('disabled')
+    }
+    
+    let taxStatus = await spctContract.taxOn();
+    document.querySelector('#tax').innerHTML = taxStatus ? "2%" /*await spctContract.taxPercent()*/ : "0%";
   }
-
-  let paused = await spctContract.paused();
-  document.querySelector('#pause').innerHTML = paused ? "Yes" : "No";
-
-  if (!paused) {
-    // todo: add in whitelist check here
-    document.querySelector('#buy-button').classList.remove('disabled')
-  }
-  
-  let taxStatus = await spctContract.taxOn();
-  document.querySelector('#tax').innerHTML = taxStatus ? "2%" /*await spctContract.taxPercent()*/ : "0%";
+  ICOTableUpdate()
 
   window.currentBlock;
   // set up live block listener
@@ -592,6 +607,8 @@ const logs = await spctContract.queryFilter(filter, 0);
     document.querySelector('#user-balance').innerHTML = ethers.utils.formatEther(await spctContract.balanceOf(userAddress));
     document.querySelector('#invested').innerHTML = ethers.utils.formatEther(await spctContract.fundraiseTotal());
     document.querySelector('#all-spct').innerHTML = ethers.utils.formatEther(ethers.BigNumber.from(await spctContract.fundraiseTotal()).mul(5));
+    ICOTableUpdate()
+    window.SPC.liquidityTableData()
   })
   spctContract.on("Phase", (phase) => {
     console.log("EVENT: Phase",phase)
