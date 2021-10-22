@@ -143,7 +143,7 @@ async function spclSetup() {
     let spclEthBal = (await provider.getBalance(spclContract.address))
     let spclSpctBal = (await spctContract.balanceOf(spclContract.address))
 
-    document.querySelector('#current-rate').innerHTML = `Current Rate: 1 ETH = ${1 * (await window.currentEthToSpct())} SPCT`;
+    document.querySelector('#current-rate').innerHTML = `Current Rate: 1 ETH = ${await window.currentEthToSpct()} SPCT`;
     document.querySelector('#swap-pool-all').innerHTML = window.SPC.spclTotalSupply <= 0 ? "-" : `${(1 / window.SPC.spclTotalSupply) * spclEthBal} ETH + ${(1 / window.SPC.spclTotalSupply) * spclSpctBal} SPCT`
     document.querySelector('#swap-user-spct').innerHTML = ethers.utils.formatEther(window.SPC.userSPCT)
     document.querySelector('#swap-user-eth').innerHTML = ethers.utils.formatEther((await provider.getBalance(userAddress)))
@@ -265,12 +265,13 @@ const logs = await spctContract.queryFilter(filter, 0);
   async function trackEthSpctRate() {
     let lastBlock = window.currentBlock;
     window.currentEthToSpct = async function() {
-      if (window.currentBlock !== lastBlock) {
+      if (!window.SPC.lastRate || window.currentBlock !== lastBlock) {
+        console.log("raw rate",(await routerContract.getETHtoSPCT10000000(0)).toNumber(), (await routerContract.getETHtoSPCT10000000(0)).toNumber() / 10000000)
         window.SPC.lastRate = (await routerContract.getETHtoSPCT10000000(0)).toNumber() / 10000000
       }
       return window.SPC.lastRate
     }
-    window.SPC.lastRate = (await routerContract.getETHtoSPCT10000000(0)).toNumber() / 10000000;
+    window.currentEthToSpct()
   }
 
   spclContract.on("Mint", async (liquidityProvider, ethIn, spctIn, spclOut, event) => {
@@ -445,23 +446,27 @@ const logs = await spctContract.queryFilter(filter, 0);
         const slip10000 = await routerContract.callStatic.swap(
           ...args
         )
-        const expectedReturn = (window.SPC.expectToReceive * (slip10000.toString()/10000) );
+        const expectedReturn = window.SPC.expectToReceive - (window.SPC.expectToReceive * (slip10000.toString()/10000) );
         console.log(ethIn, window.SPC.expectToReceive, slip10000)
         console.log(ethIn ? ethIn + " ETH" : spctIn + " SPCT", window.SPC.expectToReceive + (ethIn ?" SPCT" : " ETH"), slip10000.toString() / 10000)
-        alert(`${simulation ? 'SIMULATION: ' : ''}\nTrade In: ${
+        alert(`${simulation ? 'SIMULATION: ' : ''}\nTrade In:\n${
           ethIn ? ethIn + " ETH" : spctIn + " SPCT"  
-        }\nExpect to Receive: ${
+        }\nExpect to Receive:\n${
           expectedReturn + (ethIn ?" SPCT" : " ETH")
-        }\nExpected Slippage: ${
+        }\nvs. Nominal:\n${
+          window.SPC.expectToReceive + (ethIn ?" SPCT" : " ETH")
+        }\nExpected Slippage:\n${
           slip10000.toString() / 100
-        }%\nExpected Effective Rate: 1 ETH : ${
-          ethIn ? expectedReturn/ethIn : expectedReturn/spctIn
+        }%\nExpected Effective Rate:\n1 ETH : ${
+          ethIn ? expectedReturn/ethIn : spctIn/expectedReturn
+        } SPCT\nvs. Nominal:\n1 ETH : ${
+          await window.currentEthToSpct()
         } SPCT`)
       }
 
       // (swapper, ethIn, spctOut, event)
       window.SPC.callOnSwap = ((predictedSlip, expectToReceive, nominalRate) => (unitIn, swapIn, swapOut) => {
-        console.log('was expected pre-swap:', ethIn, spctIn, expectToReceive, slip10000)
+        console.log('was expected pre-swap:', ethIn, spctIn, expectToReceive, predictedSlip)
         alert(`Trade Complete\n\nExpected\n: Trade in: ${
           ethIn ? ethIn + " ETH" : spctIn + " SPCT"  
         }, Receive: ${
@@ -518,9 +523,13 @@ const logs = await spctContract.queryFilter(filter, 0);
 
 ;(async function() {
   // if I don't have this little block, won't work when deployed, only locally...
-  [account] = await window.ethereum.request({
-    method: "eth_requestAccounts",
-  });
+  try {
+    [account] = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
+  } catch (e) {
+    alert("metamask error, unable to get account\n\n"+e)
+  }
 
   // put on window for debugging, obvs don't do this.
   window.userAddress = await signer.getAddress();
